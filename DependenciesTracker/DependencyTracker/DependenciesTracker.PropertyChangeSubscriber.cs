@@ -7,19 +7,19 @@ namespace DependenciesTracker
 {
     internal partial class DependenciesTracker<T>
     {
-        private class PropertyChangeSubscriber<T> : IDisposable
+        private class PropertyChangeSubscriber : IDisposable
         {
             [NotNull]
             private readonly object _effectiveObject;
             [NotNull]
             private readonly PathItem<T> _pathItem;
             [NotNull]
-            private readonly Action<PropertyChangeSubscriber<T>> _onChanged;
+            private readonly Action<PropertyChangeSubscriber> _onChanged;
             [CanBeNull]
             private IDisposable _observer;
 
             public PropertyChangeSubscriber([NotNull] object effectiveObject,
-                [NotNull] PathItem<T> pathItem, [NotNull] Action<PropertyChangeSubscriber<T>> onChanged)
+                [NotNull] PathItem<T> pathItem, [NotNull] Action<PropertyChangeSubscriber> onChanged)
             {
                 if (effectiveObject == null) throw new ArgumentNullException("effectiveObject");
                 if (pathItem == null) throw new ArgumentNullException("pathItem");
@@ -36,7 +36,7 @@ namespace DependenciesTracker
             }
 
             [CanBeNull]
-            public PropertyChangeSubscriber<T> Ancestor { get; set; }
+            public PropertyChangeSubscriber Ancestor { get; set; }
 
             [NotNull]
             public PathItem<T> PathItem
