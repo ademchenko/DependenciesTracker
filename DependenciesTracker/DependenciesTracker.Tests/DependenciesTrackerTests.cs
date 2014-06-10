@@ -1,4 +1,9 @@
-﻿using DependenciesTracker.Tests.Stubs;
+﻿using System;
+using System.Diagnostics;
+using System.Linq;
+using System.Linq.Expressions;
+using DependenciesTracker.Interfaces;
+using DependenciesTracker.Tests.Stubs;
 using Xunit;
 
 namespace DependenciesTracker.Tests
@@ -99,7 +104,7 @@ namespace DependenciesTracker.Tests
 
             //Update middle level
             order.Properties = new OrderProperties { Category = "Phones", Price = 5, Quantity = 9 };
-            
+
             Assert.Equal(45, order.TotalCost);
             Assert.Equal("Order category: Phones, price = 5, quantity = 9", order.OrderLine);
 
@@ -126,6 +131,23 @@ namespace DependenciesTracker.Tests
             order.Properties.Quantity = 10;
             Assert.Equal(120, order.TotalCost);
             Assert.Equal("Order has total cost = 120", order.ShortOrderLine);
+        }
+
+        [Fact]
+        public void NotifyPropertyCollectionTest()
+        {
+            Expression<Func<Invoice, FlatOrder>> expression = o => o.Orders.AnyElement();
+
+            DependenciesMap<Invoice> map = new DependenciesMap<Invoice>();
+            map.AddMap(i => i.TotalCost, i => 0, i => i.Orders.AnyElement().Price, i => i.Orders.AnyElement().Quantity);
+
+            foreach (var mapItem in map.MapItems)
+            {
+                Debug.WriteLine(mapItem.ToString());
+            }
+
+
+
         }
     }
 }

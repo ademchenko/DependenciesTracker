@@ -1,6 +1,8 @@
 using System;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using DependenciesTracker.Interfaces;
+using JetBrains.Annotations;
 
 namespace DependenciesTracker.Tests.Stubs
 {
@@ -143,6 +145,48 @@ namespace DependenciesTracker.Tests.Stubs
         public event PropertyChangedEventHandler PropertyChanged;
 
         protected virtual void OnPropertyChanged(string propertyName)
+        {
+            PropertyChangedEventHandler handler = PropertyChanged;
+            if (handler != null) handler(this, new PropertyChangedEventArgs(propertyName));
+        }
+    }
+
+    public sealed class Invoice : INotifyPropertyChanged
+    {
+        private ObservableCollection<FlatOrder> _orders;
+        private int _totalCost;
+
+        public ObservableCollection<FlatOrder> Orders
+        {
+            get { return _orders; }
+            set
+            {
+                if (_orders != value)
+                {
+                    _orders = value;
+                    OnPropertyChanged("Orders");
+                }
+
+            }
+        }
+
+        public int TotalCost
+        {
+            get { return _totalCost; }
+            set
+            {
+                if (_totalCost != value)
+                {
+                    _totalCost = value;
+                    OnPropertyChanged("TotalCost");
+                }
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        [NotifyPropertyChangedInvocator]
+        private void OnPropertyChanged(string propertyName)
         {
             PropertyChangedEventHandler handler = PropertyChanged;
             if (handler != null) handler(this, new PropertyChangedEventArgs(propertyName));

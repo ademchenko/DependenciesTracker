@@ -58,7 +58,7 @@ namespace DependenciesTracker
         {
             if (pathItem == null || trackedObject == null)
                 return null;
-            
+
             var subscriber = new PropertyChangeSubscriber(trackedObject, pathItem, OnPropertyChanged);
             subscriber.Ancestor = Subscribe(pathItem.Ancestor, pathItem.PropertyGetter(trackedObject));
             return subscriber;

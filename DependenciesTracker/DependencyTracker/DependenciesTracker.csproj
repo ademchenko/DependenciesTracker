@@ -34,6 +34,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="CollectionExtensions.cs" />
     <Compile Include="DependenciesMap.cs" />
     <Compile Include="DependenciesTracker.cs" />
     <Compile Include="DependenciesTracker.PropertyChangeSubscriber.cs" />
