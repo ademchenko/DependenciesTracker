@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Runtime.Remoting.Messaging;
 using DependenciesTracker.Interfaces;
 
 namespace DependenciesTracker.Tests.Stubs
@@ -60,6 +61,11 @@ namespace DependenciesTracker.Tests.Stubs
         public FlatOrder()
         {
             _tracker = _dependenciesMap.StartTracking(this);
+        }
+
+        public override bool Equals(object obj)
+        {
+            return true;
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

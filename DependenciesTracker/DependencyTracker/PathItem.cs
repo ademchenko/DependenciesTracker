@@ -63,7 +63,7 @@ namespace DependenciesTracker
 
         public override string ToString()
         {
-            return (IsCollection ? "(collection)" : "") + PropertyName + "->" + (Ancestor == null ? "null" : Ancestor.ToString());
+            return (PropertyName != string.Empty ? PropertyName : "root") + "->" + (Ancestor == null ? "null" : Ancestor.ToString());
         }
     }
 }

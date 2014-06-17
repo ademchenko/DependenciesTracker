@@ -25,14 +25,6 @@ namespace DependenciesTracker
             get { return _readOnlyMapItems; }
         }
 
-        private static readonly MethodInfo _anyElementMethodInfo;
-
-        static DependenciesMap()
-        {
-            Expression<Func<ICollection<object>, object>> anyElementExpression = c => c.AnyElement();
-            _anyElementMethodInfo = ((MethodCallExpression) anyElementExpression.Body).Method.GetGenericMethodDefinition();
-        }
-
         public DependenciesMap()
         {
             _readOnlyMapItems = new ReadOnlyCollection<PathItem<T>>(_mapItems);
@@ -102,7 +94,7 @@ namespace DependenciesTracker
                 var methodCall = memberOrMethodCallExpression as MethodCallExpression;
                 if (methodCall != null)
                 {
-                    if (!methodCall.Method.GetGenericMethodDefinition().Equals(_anyElementMethodInfo))
+                    if (!methodCall.Method.GetGenericMethodDefinition().Equals(CollectionExtensions.EachElementMethodInfo))
                         throw new NotSupportedException(string.Format("Call of method {0} is not supported", methodCall.Method));
 
                     memberOrMethodCallExpression = methodCall.Arguments.Single();
@@ -117,9 +109,13 @@ namespace DependenciesTracker
                 var property = memberExpression.Member;
                 var compiledGetter = BuildGetter(memberExpression.Expression.Type, property.Name);
 
-                rootPathItem = new PathItem<T>(compiledGetter, property.Name, lastChainItemIsCollection, rootPathItem, rootPathItem == null ? calculateAndSet : null);
+                if (lastChainItemIsCollection)
+                {
+                    rootPathItem = new PathItem<T>(compiledGetter, "CollectionItems", true, rootPathItem, rootPathItem == null ? calculateAndSet : null);
+                    lastChainItemIsCollection = false;
+                }
 
-                lastChainItemIsCollection = false;
+                rootPathItem = new PathItem<T>(compiledGetter, property.Name, false, rootPathItem, rootPathItem == null ? calculateAndSet : null);
 
                 if (memberExpression.Expression == null || memberExpression.Expression is ParameterExpression)
                     break;
@@ -131,6 +127,8 @@ namespace DependenciesTracker
             }
 
             Debug.Assert(rootPathItem != null);
+
+            rootPathItem = new PathItem<T>(o => o, string.Empty, false, rootPathItem, null);
 
             return rootPathItem;
         }

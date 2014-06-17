@@ -1,8 +1,6 @@
-﻿using System;
+﻿using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
-using System.Linq.Expressions;
-using DependenciesTracker.Interfaces;
 using DependenciesTracker.Tests.Stubs;
 using Xunit;
 
@@ -136,17 +134,74 @@ namespace DependenciesTracker.Tests
         [Fact]
         public void NotifyPropertyCollectionTest()
         {
-            Expression<Func<Invoice, FlatOrder>> expression = o => o.Orders.AnyElement();
-
-            DependenciesMap<Invoice> map = new DependenciesMap<Invoice>();
-            map.AddMap(i => i.TotalCost, i => 0, i => i.Orders.AnyElement().Price, i => i.Orders.AnyElement().Quantity);
+            var map = new DependenciesMap<Invoice>();
+            map.AddMap(i => i.TotalCost, i => 0, i => i.Orders.EachElement().Price, i => i.Orders.EachElement().Quantity);
 
             foreach (var mapItem in map.MapItems)
-            {
                 Debug.WriteLine(mapItem.ToString());
-            }
+        }
 
+        [Fact]
+        public void NotifyPropertyCollectionTest_Generic()
+        {
+            var invoice = new Invoice();
+            Assert.Equal(-1, invoice.TotalCost);
 
+            invoice.Orders = new ObservableCollection<FlatOrder> { new FlatOrder { Price = 1, Quantity = 5 }, new FlatOrder { Price = 2, Quantity = 6 } };
+            Assert.Equal(17, invoice.TotalCost);
+
+            invoice.Orders[0].Price = 2;
+            Assert.Equal(22, invoice.TotalCost);
+
+            invoice.Orders[1].Quantity = 7;
+            Assert.Equal(24, invoice.TotalCost);
+
+            invoice.Orders = new ObservableCollection<FlatOrder> { new FlatOrder { Price = 10, Quantity = 7 }, new FlatOrder { Price = 6, Quantity = 11 } };
+            Assert.Equal(136, invoice.TotalCost);
+
+            //Add/Insert item
+            invoice.Orders.Add(new FlatOrder { Price = 2, Quantity = 3 });
+            Assert.Equal(142, invoice.TotalCost);
+
+            invoice.Orders.Insert(1, new FlatOrder { Price = 7, Quantity = 5 });
+            Assert.Equal(177, invoice.TotalCost);
+            
+            //Remove item
+            invoice.Orders.RemoveAt(3);
+            Assert.Equal(171, invoice.TotalCost);
+
+            //Replace item
+            invoice.Orders[2] = new FlatOrder {Price = 3, Quantity = 10};
+            Assert.Equal(135, invoice.TotalCost);
+
+            //Reset item
+            invoice.Orders.Clear();
+            Assert.Equal(0, invoice.TotalCost);
+        }
+
+        [Fact]
+        public void ObservableCollectionTest()
+        {
+            ObservableCollection<FlatOrder> orders = new ObservableCollection<FlatOrder>();
+            orders.CollectionChanged += orders_CollectionChanged;
+
+            var flatOrder1 = new FlatOrder();
+            var flatOrder2 = new FlatOrder();
+            orders.Add(flatOrder2);
+            Debug.WriteLine("Added {0}", flatOrder2.GetHashCode());
+            orders.Add(flatOrder1);
+            Debug.WriteLine("Added {0}", flatOrder1.GetHashCode());
+
+            orders.Insert(1, new FlatOrder());
+
+            Debug.WriteLine("Going to remove {0}", flatOrder1.GetHashCode());
+            orders.Remove(flatOrder1);
+
+            //Debug.WriteLine("Left {0}", orders.Single().GetHashCode());
+        }
+
+        void orders_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
+        {
 
         }
     }
