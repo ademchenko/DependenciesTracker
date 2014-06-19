@@ -80,9 +80,11 @@ namespace DependenciesTracker
         private static PathItem<T> BuildPath([NotNull] Expression<Func<T, object>> pathExpession, Action<T> calculateAndSet)
         {
             var convertExpression = pathExpession.Body as UnaryExpression;
-            if (convertExpression != null && convertExpression.NodeType != ExpressionType.Convert)
-                throw new InvalidOperationException("unary expression is not a convert expression");
-
+            if (convertExpression != null && 
+                (convertExpression.NodeType != ExpressionType.Convert || convertExpression.Type != typeof(object)))
+                throw new NotSupportedException(string.Format(
+                    "Unary expression {0} is not supported. Only \"convert to object\" expression is allowed in the end of path.", convertExpression));
+         
             var memberOrMethodCallExpression = convertExpression != null ? convertExpression.Operand : pathExpession.Body;
 
             PathItem<T> rootPathItem = null;
@@ -94,8 +96,9 @@ namespace DependenciesTracker
                 var methodCall = memberOrMethodCallExpression as MethodCallExpression;
                 if (methodCall != null)
                 {
-                    if (!methodCall.Method.GetGenericMethodDefinition().Equals(CollectionExtensions.EachElementMethodInfo))
-                        throw new NotSupportedException(string.Format("Call of method {0} is not supported", methodCall.Method));
+                    if (!methodCall.Method.IsGenericMethod || !methodCall.Method.GetGenericMethodDefinition().Equals(CollectionExtensions.EachElementMethodInfo))
+                        throw new NotSupportedException(string.Format("Call of method {0} is not supported. Only {1} call is supported for collections in path", 
+                                                        methodCall.Method, CollectionExtensions.EachElementMethodInfo));
 
                     memberOrMethodCallExpression = methodCall.Arguments.Single();
                     lastChainItemIsCollection = true;
@@ -104,7 +107,7 @@ namespace DependenciesTracker
 
                 var memberExpression = memberOrMethodCallExpression as MemberExpression;
                 if (memberExpression == null)
-                    throw new InvalidOperationException( string.Format("Actual expression is {0}, but member expression is expected", memberOrMethodCallExpression));
+                    throw new NotSupportedException(string.Format("Expected expression is member expression. Expression {0} is not supported.", memberOrMethodCallExpression));
 
                 var property = memberExpression.Member;
                 var compiledGetter = BuildGetter(memberExpression.Expression.Type, property.Name);
@@ -121,7 +124,7 @@ namespace DependenciesTracker
                     break;
 
                 if (!(memberExpression.Expression is MemberExpression) && !(memberExpression.Expression is MethodCallExpression))
-                    throw new InvalidOperationException(string.Format("The expression {0} should be either member or method call expression", memberExpression.Expression));
+                    throw new NotSupportedException(string.Format("Expected expression is either member or method call expression. The expression {0} is not supported", memberExpression.Expression));
 
                 memberOrMethodCallExpression = memberExpression.Expression;
             }
