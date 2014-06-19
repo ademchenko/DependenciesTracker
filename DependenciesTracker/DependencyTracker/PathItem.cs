@@ -9,6 +9,9 @@ namespace DependenciesTracker
         private readonly Func<object, object> _propertyGetter;
         [NotNull]
         private readonly string _propertyName;
+        
+        private readonly bool _isCollection;
+        
         [CanBeNull]
         private readonly PathItem<T> _ancestor;
         [CanBeNull]
@@ -38,9 +41,13 @@ namespace DependenciesTracker
             get { return _updateDependentPropertyAction; }
         }
 
-        public PathItem([NotNull] Func<object, object> propertyGetter, [NotNull] string propertyName,
-            [CanBeNull] PathItem<T> ancestor,
-            [CanBeNull] Action<T> updateDependentPropertyAction)
+        public bool IsCollection
+        {
+            get { return _isCollection; }
+        }
+
+        public PathItem([NotNull] Func<object, object> propertyGetter, [NotNull] string propertyName, bool isCollection,
+                        [CanBeNull] PathItem<T> ancestor, [CanBeNull] Action<T> updateDependentPropertyAction)
         {
             if (propertyGetter == null)
                 throw new ArgumentNullException("propertyGetter");
@@ -49,8 +56,14 @@ namespace DependenciesTracker
 
             _propertyGetter = propertyGetter;
             _propertyName = propertyName;
+            _isCollection = isCollection;
             _ancestor = ancestor;
             _updateDependentPropertyAction = updateDependentPropertyAction;
+        }
+
+        public override string ToString()
+        {
+            return (PropertyName != string.Empty ? PropertyName : "root") + "->" + (Ancestor == null ? "null" : Ancestor.ToString());
         }
     }
 }

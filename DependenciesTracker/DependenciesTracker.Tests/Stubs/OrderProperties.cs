@@ -1,6 +1,9 @@
 using System;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using DependenciesTracker.Interfaces;
+using JetBrains.Annotations;
 
 namespace DependenciesTracker.Tests.Stubs
 {
@@ -72,7 +75,7 @@ namespace DependenciesTracker.Tests.Stubs
             _map.AddMap(o => o.OrderLine, BuildOrderLine, o => o.Properties.Category, o => o.Properties.Price, o => o.Properties.Quantity)
                 .AddMap(o => o.TotalCost, o => o.Properties != null ? o.Properties.Price * o.Properties.Quantity : -1, o => o.Properties.Price, o => o.Properties.Quantity)
                 .AddMap(o => o.ShortOrderLine, o => o.TotalCost == -1 ? "ShortOrderLine is empty" : string.Format("Order has total cost = {0}", o.TotalCost), o => o.TotalCost);
-            
+
         }
 
         public Order()
@@ -82,12 +85,12 @@ namespace DependenciesTracker.Tests.Stubs
 
         private static string BuildOrderLine(Order order)
         {
-            return order.Properties == null ? "Order is empty" 
+            return order.Properties == null ? "Order is empty"
                 : string.Format("Order category: {0}, price = {1}, quantity = {2}", order.Properties.Category, order.Properties.Price, order.Properties.Quantity);
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
-        
+
         protected virtual void OnPropertyChanged(string propertyName)
         {
             PropertyChangedEventHandler handler = PropertyChanged;
@@ -143,6 +146,62 @@ namespace DependenciesTracker.Tests.Stubs
         public event PropertyChangedEventHandler PropertyChanged;
 
         protected virtual void OnPropertyChanged(string propertyName)
+        {
+            PropertyChangedEventHandler handler = PropertyChanged;
+            if (handler != null) handler(this, new PropertyChangedEventArgs(propertyName));
+        }
+    }
+
+    public sealed class Invoice : INotifyPropertyChanged
+    {
+        private ObservableCollection<FlatOrder> _orders;
+        private int _totalCost;
+
+        public ObservableCollection<FlatOrder> Orders
+        {
+            get { return _orders; }
+            set
+            {
+                if (_orders != value)
+                {
+                    _orders = value;
+                    OnPropertyChanged("Orders");
+                }
+
+            }
+        }
+
+        public int TotalCost
+        {
+            get { return _totalCost; }
+            set
+            {
+                if (_totalCost != value)
+                {
+                    _totalCost = value;
+                    OnPropertyChanged("TotalCost");
+                }
+            }
+        }
+
+        private static readonly DependenciesMap<Invoice> _dependenciesMap = new DependenciesMap<Invoice>();
+        private IDisposable _tracker;
+
+        static Invoice()
+        {
+            _dependenciesMap.AddMap(i => i.TotalCost, i => i.Orders == null ? -1 : i.Orders.Sum(o => o.Price * o.Quantity),
+                i => i.Orders.EachElement().Price, i => i.Orders.EachElement().Quantity);
+        }
+
+        public Invoice()
+        {
+            _tracker = _dependenciesMap.StartTracking(this);
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        [NotifyPropertyChangedInvocator]
+        private void OnPropertyChanged(string propertyName)
         {
             PropertyChangedEventHandler handler = PropertyChanged;
             if (handler != null) handler(this, new PropertyChangedEventArgs(propertyName));

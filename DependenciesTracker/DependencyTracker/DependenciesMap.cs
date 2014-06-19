@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Reflection;
 using DependenciesTracker.Interfaces;
 using JetBrains.Annotations;
 
@@ -82,25 +83,52 @@ namespace DependenciesTracker
             if (convertExpression != null && convertExpression.NodeType != ExpressionType.Convert)
                 throw new InvalidOperationException("unary expression is not a convert expression");
 
-            var memberExpression = (MemberExpression)(convertExpression != null ? convertExpression.Operand : pathExpession.Body);
-            Debug.WriteLine(memberExpression.Expression.Type);
+            var memberOrMethodCallExpression = convertExpression != null ? convertExpression.Operand : pathExpession.Body;
 
             PathItem<T> rootPathItem = null;
 
-            while (memberExpression != null)
+            var lastChainItemIsCollection = false;
+
+            while (memberOrMethodCallExpression != null)
             {
+                var methodCall = memberOrMethodCallExpression as MethodCallExpression;
+                if (methodCall != null)
+                {
+                    if (!methodCall.Method.GetGenericMethodDefinition().Equals(CollectionExtensions.EachElementMethodInfo))
+                        throw new NotSupportedException(string.Format("Call of method {0} is not supported", methodCall.Method));
+
+                    memberOrMethodCallExpression = methodCall.Arguments.Single();
+                    lastChainItemIsCollection = true;
+                    continue;
+                }
+
+                var memberExpression = memberOrMethodCallExpression as MemberExpression;
+                if (memberExpression == null)
+                    throw new InvalidOperationException( string.Format("Actual expression is {0}, but member expression is expected", memberOrMethodCallExpression));
+
                 var property = memberExpression.Member;
                 var compiledGetter = BuildGetter(memberExpression.Expression.Type, property.Name);
 
-                rootPathItem = new PathItem<T>(compiledGetter, property.Name, rootPathItem, rootPathItem == null ? calculateAndSet : null);
+                if (lastChainItemIsCollection)
+                {
+                    rootPathItem = new PathItem<T>(compiledGetter, "CollectionItems", true, rootPathItem, rootPathItem == null ? calculateAndSet : null);
+                    lastChainItemIsCollection = false;
+                }
 
-                if (!(memberExpression.Expression is MemberExpression) && !(memberExpression.Expression is ParameterExpression))
-                    throw new InvalidOperationException(string.Format("The expression {0} should be either member or parameter expression", memberExpression.Expression));
+                rootPathItem = new PathItem<T>(compiledGetter, property.Name, false, rootPathItem, rootPathItem == null ? calculateAndSet : null);
 
-                memberExpression = memberExpression.Expression as MemberExpression;
+                if (memberExpression.Expression == null || memberExpression.Expression is ParameterExpression)
+                    break;
+
+                if (!(memberExpression.Expression is MemberExpression) && !(memberExpression.Expression is MethodCallExpression))
+                    throw new InvalidOperationException(string.Format("The expression {0} should be either member or method call expression", memberExpression.Expression));
+
+                memberOrMethodCallExpression = memberExpression.Expression;
             }
 
             Debug.Assert(rootPathItem != null);
+
+            rootPathItem = new PathItem<T>(o => o, string.Empty, false, rootPathItem, null);
 
             return rootPathItem;
         }

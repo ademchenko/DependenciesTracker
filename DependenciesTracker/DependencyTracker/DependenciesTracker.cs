@@ -11,7 +11,7 @@ namespace DependenciesTracker
         [NotNull]
         private readonly T _trackedObject;
         [NotNull]
-        private readonly IList<PropertyChangeSubscriber> _rootSubscribers = new List<PropertyChangeSubscriber>();
+        private readonly IList<SubscriberBase> _rootSubscribers = new List<SubscriberBase>();
 
         public DependenciesTracker([NotNull] DependenciesMap<T> map, [NotNull] T trackedObject)
         {
@@ -31,15 +31,14 @@ namespace DependenciesTracker
         {
             foreach (var map in _map.MapItems)
             {
-                _rootSubscribers.Add(Subscribe(map, _trackedObject));
+                _rootSubscribers.Add(SubscriberBase.CreateSubscriber(_trackedObject, map, OnPropertyChanged));
                 ProvokeDependentPropertiesUpdate(map);
             }
         }
 
-        private void OnPropertyChanged([NotNull] PropertyChangeSubscriber subscriber)
-        {
-            subscriber.Ancestor = Subscribe(subscriber.PathItem.Ancestor, subscriber.PathItem.PropertyGetter(subscriber.EffectiveObject));
-            ProvokeDependentPropertiesUpdate(subscriber.PathItem);
+        private void OnPropertyChanged([NotNull] PathItem<T> subscriber)
+        {   
+            ProvokeDependentPropertiesUpdate(subscriber);
         }
 
         private void ProvokeDependentPropertiesUpdate([CanBeNull] PathItem<T> pathItem)
@@ -51,17 +50,6 @@ namespace DependenciesTracker
                 pathItem.UpdateDependentPropertyAction(_trackedObject);
 
             ProvokeDependentPropertiesUpdate(pathItem.Ancestor);
-        }
-
-
-        private PropertyChangeSubscriber Subscribe(PathItem<T> pathItem, object trackedObject)
-        {
-            if (pathItem == null || trackedObject == null)
-                return null;
-            
-            var subscriber = new PropertyChangeSubscriber(trackedObject, pathItem, OnPropertyChanged);
-            subscriber.Ancestor = Subscribe(pathItem.Ancestor, pathItem.PropertyGetter(trackedObject));
-            return subscriber;
         }
 
 
