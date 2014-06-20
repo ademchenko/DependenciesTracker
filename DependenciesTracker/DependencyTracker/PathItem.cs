@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using JetBrains.Annotations;
 
 namespace DependenciesTracker
@@ -61,9 +63,24 @@ namespace DependenciesTracker
             _updateDependentPropertyAction = updateDependentPropertyAction;
         }
 
+        [NotNull]
+        internal IEnumerable<string> PathStrings
+        {
+            get
+            {
+                yield return PropertyName != string.Empty ? PropertyName : "root";
+
+                if (Ancestor != null)
+                {
+                    foreach (var pathString in Ancestor.PathStrings)
+                        yield return pathString;
+                }
+            }
+        }
+
         public override string ToString()
         {
-            return (PropertyName != string.Empty ? PropertyName : "root") + "->" + (Ancestor == null ? "null" : Ancestor.ToString());
+            return string.Join("->", PathStrings);
         }
     }
 }

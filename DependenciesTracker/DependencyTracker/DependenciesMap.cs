@@ -114,7 +114,7 @@ namespace DependenciesTracker
 
                 if (lastChainItemIsCollection)
                 {
-                    rootPathItem = new PathItem<T>(compiledGetter, "CollectionItems", true, rootPathItem, rootPathItem == null ? calculateAndSet : null);
+                    rootPathItem = new PathItem<T>(compiledGetter, "CollectionItem", true, rootPathItem, rootPathItem == null ? calculateAndSet : null);
                     lastChainItemIsCollection = false;
                 }
 
