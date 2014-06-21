@@ -20,8 +20,10 @@ namespace DependenciesTracker.Tests.PathBuilding
         public int DependentProperty { get; set; }
 
         public List<string> Strings { get; set; }
+        public List<List<string>> StringLists { get; set; }
 
         public List<int> Ints { get; set; }
+        public List<List<int>> IntLists { get; set; }
 
         public string StringProperty { get; set; }
 
@@ -220,12 +222,28 @@ namespace DependenciesTracker.Tests.PathBuilding
                     (Expression<Func<PathBuildingTestClass, object>>)(o => DependenciesTracker.CollectionExtensions.EachElement(o.Ints)),
                     new[] {"root", "Ints", "CollectionItem"}
                 };
-                
+
                 //Property chain with collection item in the middle of chain
                 yield return new object[]
                 {
                     (Expression<Func<PathBuildingTestClass, object>>)(o => DependenciesTracker.CollectionExtensions.EachElement(o.Strings).Length),
                     new[] {"root", "Strings", "CollectionItem", "Length"}
+                };
+
+                //Property chain with collection item of collection item in the middle of chain
+                yield return new object[]
+                {
+                    (Expression<Func<PathBuildingTestClass, object>>)(
+                        o => DependenciesTracker.CollectionExtensions.EachElement(DependenciesTracker.CollectionExtensions.EachElement(o.StringLists)).Length),
+                    new[] {"root", "StringLists", "CollectionItem","CollectionItem", "Length"}
+                };
+
+                //Property chain with collection item of collection item in the end of chain
+                yield return new object[]
+                {
+                    (Expression<Func<PathBuildingTestClass, object>>)(
+                        o => DependenciesTracker.CollectionExtensions.EachElement(DependenciesTracker.CollectionExtensions.EachElement(o.IntLists))),
+                    new[] {"root", "IntLists", "CollectionItem", "CollectionItem"}
                 };
             }
         }
@@ -240,14 +258,32 @@ namespace DependenciesTracker.Tests.PathBuilding
 
         //Reproduces the https://github.com/ademchenko/DependenciesTracker/issues/3
         [Fact]
-        public void AddDependency_PropertyChainWithSingleCollectionItemAtTheBegginning_Supported()
+        public void AddDependency_PropertyChainWithCollectionItemAtTheBegginning_Supported()
         {
             var map = new DependenciesMap<PathBuildingCollectionTestClass<string>>();
             map.AddMap(o => o.IntProperty, o => -1, o => DependenciesTracker.CollectionExtensions.EachElement(o));
 
-            Assert.Equal(new[] {"root", "CollectionItem"}, map.MapItems.Single().PathStrings);
+            Assert.Equal(new[] { "root", "CollectionItem" }, map.MapItems.Single().PathStrings);
         }
 
+        //Reproduces the https://github.com/ademchenko/DependenciesTracker/issues/3
+        [Fact]
+        public void AddDependency_PropertyChainWithCollectionItemOfCollectionItemAtTheBegginning_Supported()
+        {
+            var map = new DependenciesMap<PathBuildingCollectionTestClass<List<string>>>();
+            map.AddMap(o => o.IntProperty, o => -1, o => DependenciesTracker.CollectionExtensions.EachElement(DependenciesTracker.CollectionExtensions.EachElement(o)));
+
+            Assert.Equal(new[] { "root", "CollectionItem", "CollectionItem" }, map.MapItems.Single().PathStrings);
+        }
+
+        [Fact]
+        public void AddDependency_PropertyChainWithCollectionItemOfCollectionItemAtTheBegginningAndPropertyInTheEnd_Supported()
+        {
+            var map = new DependenciesMap<PathBuildingCollectionTestClass<List<string>>>();
+            map.AddMap(o => o.IntProperty, o => -1, o => DependenciesTracker.CollectionExtensions.EachElement(DependenciesTracker.CollectionExtensions.EachElement(o)).Length);
+
+            Assert.Equal(new[] { "root", "CollectionItem", "CollectionItem", "Length" }, map.MapItems.Single().PathStrings);
+        }
         private static void SupportedPathsTestImpl(Expression<Func<PathBuildingTestClass, object>> path, string[] expectedParseResult)
         {
             var map = new DependenciesMap<PathBuildingTestClass>();
