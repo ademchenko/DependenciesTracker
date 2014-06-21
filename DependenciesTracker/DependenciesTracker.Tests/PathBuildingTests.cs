@@ -237,9 +237,10 @@ namespace DependenciesTracker.Tests.PathBuilding
         {
             SupportedPathsTestImpl(path, expectedParseResult);
         }
-        
+
+        //Reproduces the https://github.com/ademchenko/DependenciesTracker/issues/3
         [Fact]
-        public void AddDependency_PropertyChaingWithSingleCollectionItemAtTheBegginning_Supported()
+        public void AddDependency_PropertyChainWithSingleCollectionItemAtTheBegginning_Supported()
         {
             var map = new DependenciesMap<PathBuildingCollectionTestClass<string>>();
             map.AddMap(o => o.IntProperty, o => -1, o => DependenciesTracker.CollectionExtensions.EachElement(o));

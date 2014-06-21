@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -15,8 +14,8 @@ namespace DependenciesTracker
     {
         private sealed class RootObjectSubscriber : SubscriberBase
         {
-            public RootObjectSubscriber([NotNull] object effectiveObject, [NotNull] PathItem<T> pathItem,
-                [NotNull] Action<PathItem<T>> onChanged)
+            public RootObjectSubscriber([NotNull] object effectiveObject, [NotNull] PathItemBase<T> pathItem,
+                [NotNull] Action<PathItemBase<T>> onChanged)
                 : base(effectiveObject, pathItem, onChanged)
             {
                 Ancestors.Add(CreateSubscriber(effectiveObject, pathItem.Ancestor, onChanged));
@@ -30,8 +29,11 @@ namespace DependenciesTracker
             [CanBeNull]
             private IDisposable _observer;
 
+            [NotNull]
+            private new PropertyPathItem<T> PathItem { get { return (PropertyPathItem<T>)base.PathItem; } }
+
             public PropertyChangeSubscriber([NotNull] object effectiveObject,
-                [NotNull] PathItem<T> pathItem, [NotNull] Action<PathItem<T>> onChanged)
+                [NotNull] PropertyPathItem<T> pathItem, [NotNull] Action<PathItemBase<T>> onChanged)
                 : base(effectiveObject, pathItem, onChanged)
             {
 
@@ -92,11 +94,13 @@ namespace DependenciesTracker
             {
                 get { return (IEnumerable)base.EffectiveObject; }
             }
-            public CollectionChangeSubscriber([NotNull] object effectiveObject, [NotNull] PathItem<T> pathItem, [NotNull] Action<PathItem<T>> onChanged)
+
+            [NotNull]
+            private new CollectionPathItem<T> PathItem { get { return (CollectionPathItem<T>)base.PathItem; } }
+
+            public CollectionChangeSubscriber([NotNull] object effectiveObject, [NotNull] CollectionPathItem<T> pathItem, [NotNull] Action<PathItemBase<T>> onChanged)
                 : base(effectiveObject, pathItem, onChanged)
             {
-                Debug.Assert(pathItem.IsCollection);
-
                 var notifyCollectionChange = effectiveObject as INotifyCollectionChanged;
                 if (notifyCollectionChange != null)
                     SubscribeToCollectionChange(notifyCollectionChange);
@@ -127,7 +131,7 @@ namespace DependenciesTracker
             private const int _invalidCollectionIndexValue = -1;
 
             private void CollectionItemsChanged(NotifyCollectionChangedEventArgs eventArgs)
-            {  
+            {
                 if (PathItem.Ancestor != null)
                     UpdateAncestors(eventArgs);
 
@@ -184,8 +188,11 @@ namespace DependenciesTracker
         private abstract class SubscriberBase : IDisposable
         {
             private readonly object _effectiveObject;
-            public readonly PathItem<T> PathItem;
-            public readonly Action<PathItem<T>> OnChanged;
+            [NotNull]
+            protected readonly PathItemBase<T> PathItem;
+
+            protected readonly Action<PathItemBase<T>> OnChanged;
+            [NotNull]
             private readonly IList<SubscriberBase> _ancestors = new List<SubscriberBase>();
 
             public object EffectiveObject
@@ -199,18 +206,25 @@ namespace DependenciesTracker
                 get { return _ancestors; }
             }
 
-            public static SubscriberBase CreateSubscriber([NotNull] object effectiveObject, [NotNull] PathItem<T> pathItem, [NotNull] Action<PathItem<T>> onChanged)
+            public static SubscriberBase CreateSubscriber([NotNull] object effectiveObject, [NotNull] PathItemBase<T> pathItem, [NotNull] Action<PathItemBase<T>> onChanged)
             {
-                if (pathItem.PropertyName == string.Empty)
-                    return new RootObjectSubscriber(effectiveObject, pathItem, onChanged);
+                var propertyPathItem = pathItem as PropertyPathItem<T>;
+                if (propertyPathItem != null)
+                {
+                    if (propertyPathItem.PropertyName == string.Empty)
+                        return new RootObjectSubscriber(effectiveObject, pathItem, onChanged);
 
-                if (pathItem.IsCollection)
-                    return new CollectionChangeSubscriber(effectiveObject, pathItem, onChanged);
+                    return new PropertyChangeSubscriber(effectiveObject, propertyPathItem, onChanged);
+                }
 
-                return new PropertyChangeSubscriber(effectiveObject, pathItem, onChanged);
+                var collectionPathItem = pathItem as CollectionPathItem<T>;
+                if (collectionPathItem != null)
+                    return new CollectionChangeSubscriber(effectiveObject, collectionPathItem, onChanged);
+
+                throw new ArgumentException(string.Format("Unknown path item type: {0}", pathItem.GetType()), "pathItem");
             }
 
-            protected SubscriberBase([NotNull] object effectiveObject, [NotNull] PathItem<T> pathItem, [NotNull] Action<PathItem<T>> onChanged)
+            protected SubscriberBase([NotNull] object effectiveObject, [NotNull] PathItemBase<T> pathItem, [NotNull] Action<PathItemBase<T>> onChanged)
             {
                 if (effectiveObject == null) throw new ArgumentNullException("effectiveObject");
                 if (pathItem == null) throw new ArgumentNullException("pathItem");

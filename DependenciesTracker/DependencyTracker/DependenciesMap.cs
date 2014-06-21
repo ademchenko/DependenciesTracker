@@ -4,7 +4,6 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Reflection;
 using DependenciesTracker.Interfaces;
 using JetBrains.Annotations;
 
@@ -14,20 +13,20 @@ namespace DependenciesTracker
     public sealed class DependenciesMap<T> : IDependenciesMap<T>
     {
         [NotNull]
-        private readonly IList<PathItem<T>> _mapItems = new List<PathItem<T>>();
+        private readonly IList<PathItemBase<T>> _mapItems = new List<PathItemBase<T>>();
 
         [NotNull]
-        private readonly ReadOnlyCollection<PathItem<T>> _readOnlyMapItems;
+        private readonly ReadOnlyCollection<PathItemBase<T>> _readOnlyMapItems;
 
         [NotNull]
-        internal ReadOnlyCollection<PathItem<T>> MapItems
+        internal ReadOnlyCollection<PathItemBase<T>> MapItems
         {
             get { return _readOnlyMapItems; }
         }
 
         public DependenciesMap()
         {
-            _readOnlyMapItems = new ReadOnlyCollection<PathItem<T>>(_mapItems);
+            _readOnlyMapItems = new ReadOnlyCollection<PathItemBase<T>>(_mapItems);
         }
 
         [NotNull]
@@ -65,9 +64,8 @@ namespace DependenciesTracker
             return lambda.Compile();
         }
 
-
         [NotNull]
-        private static IEnumerable<PathItem<T>> BuildPaths([NotNull] IEnumerable<Expression<Func<T, object>>> dependencyPaths,
+        private static IEnumerable<PathItemBase<T>> BuildPaths([NotNull] IEnumerable<Expression<Func<T, object>>> dependencyPaths,
             [NotNull] Action<T> calculateAndSet)
         {
             if (calculateAndSet == null)
@@ -77,61 +75,51 @@ namespace DependenciesTracker
         }
 
         [NotNull]
-        private static PathItem<T> BuildPath([NotNull] Expression<Func<T, object>> pathExpession, Action<T> calculateAndSet)
+        private static PathItemBase<T> BuildPath([NotNull] Expression<Func<T, object>> pathExpession, Action<T> calculateAndSet)
         {
             var convertExpression = pathExpession.Body as UnaryExpression;
-            if (convertExpression != null && 
+            if (convertExpression != null &&
                 (convertExpression.NodeType != ExpressionType.Convert || convertExpression.Type != typeof(object)))
                 throw new NotSupportedException(string.Format(
                     "Unary expression {0} is not supported. Only \"convert to object\" expression is allowed in the end of path.", convertExpression));
-         
-            var memberOrMethodCallExpression = convertExpression != null ? convertExpression.Operand : pathExpession.Body;
 
-            PathItem<T> rootPathItem = null;
+            var currentExpression = convertExpression != null ? convertExpression.Operand : pathExpession.Body;
 
-            var lastChainItemIsCollection = false;
+            PathItemBase<T> rootPathItem = null;
 
-            while (memberOrMethodCallExpression != null)
+            while (!(currentExpression is ParameterExpression))
             {
-                var methodCall = memberOrMethodCallExpression as MethodCallExpression;
+                var methodCall = currentExpression as MethodCallExpression;
                 if (methodCall != null)
                 {
                     if (!methodCall.Method.IsGenericMethod || !methodCall.Method.GetGenericMethodDefinition().Equals(CollectionExtensions.EachElementMethodInfo))
-                        throw new NotSupportedException(string.Format("Call of method {0} is not supported. Only {1} call is supported for collections in path", 
-                                                        methodCall.Method, CollectionExtensions.EachElementMethodInfo));
+                        throw new NotSupportedException(string.Format("Call of method {0} is not supported. Only {1} call is supported for collections in path",
+                                                                      methodCall.Method, CollectionExtensions.EachElementMethodInfo));
 
-                    memberOrMethodCallExpression = methodCall.Arguments.Single();
-                    lastChainItemIsCollection = true;
+                    rootPathItem = new CollectionPathItem<T>(rootPathItem, rootPathItem == null ? calculateAndSet : null);
+
+                    var methodCallArgument = methodCall.Arguments.Single();
+                    currentExpression = methodCallArgument;
                     continue;
                 }
 
-                var memberExpression = memberOrMethodCallExpression as MemberExpression;
+                var memberExpression = currentExpression as MemberExpression;
                 if (memberExpression == null)
-                    throw new NotSupportedException(string.Format("Expected expression is member expression. Expression {0} is not supported.", memberOrMethodCallExpression));
+                    throw new NotSupportedException(string.Format("Expected expression is member expression. Expression {0} is not supported.", currentExpression));
 
                 var property = memberExpression.Member;
                 var compiledGetter = BuildGetter(memberExpression.Expression.Type, property.Name);
 
-                if (lastChainItemIsCollection)
-                {
-                    rootPathItem = new PathItem<T>(compiledGetter, "CollectionItem", true, rootPathItem, rootPathItem == null ? calculateAndSet : null);
-                    lastChainItemIsCollection = false;
-                }
+                rootPathItem = new PropertyPathItem<T>(compiledGetter, property.Name, rootPathItem, rootPathItem == null ? calculateAndSet : null);
 
-                rootPathItem = new PathItem<T>(compiledGetter, property.Name, false, rootPathItem, rootPathItem == null ? calculateAndSet : null);
-
-                if (memberExpression.Expression == null || memberExpression.Expression is ParameterExpression)
-                    break;
-
-                if (!(memberExpression.Expression is MemberExpression) && !(memberExpression.Expression is MethodCallExpression))
-                    throw new NotSupportedException(string.Format("Expected expression is either member or method call expression. The expression {0} is not supported", memberExpression.Expression));
-
-                memberOrMethodCallExpression = memberExpression.Expression;
+                currentExpression = memberExpression.Expression;
             }
 
-            Debug.Assert(rootPathItem != null);
+            //The chain doesn't contain any element (i.e. the expression contains only root object root => root)
+            if (rootPathItem == null)
+                throw new NotSupportedException(string.Format("The path {0} is too short. It contains a root object only.", pathExpession));
 
-            rootPathItem = new PathItem<T>(o => o, string.Empty, false, rootPathItem, null);
+            rootPathItem = new PropertyPathItem<T>(o => o, string.Empty, rootPathItem, null);
 
             return rootPathItem;
         }

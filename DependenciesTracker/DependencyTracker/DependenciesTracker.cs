@@ -36,12 +36,12 @@ namespace DependenciesTracker
             }
         }
 
-        private void OnPropertyChanged([NotNull] PathItem<T> subscriber)
+        private void OnPropertyChanged([NotNull] PathItemBase<T> subscriber)
         {   
             ProvokeDependentPropertiesUpdate(subscriber);
         }
 
-        private void ProvokeDependentPropertiesUpdate([CanBeNull] PathItem<T> pathItem)
+        private void ProvokeDependentPropertiesUpdate([CanBeNull] PathItemBase<T> pathItem)
         {
             if (pathItem == null)
                 return;
