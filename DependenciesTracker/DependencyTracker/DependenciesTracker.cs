@@ -46,8 +46,8 @@ namespace DependenciesTracker
             if (pathItem == null)
                 return;
 
-            if (pathItem.UpdateDependentPropertyAction != null)
-                pathItem.UpdateDependentPropertyAction(_trackedObject);
+            if (pathItem.UpdateDependentPropertyOrFieldAction != null)
+                pathItem.UpdateDependentPropertyOrFieldAction(_trackedObject);
 
             ProvokeDependentPropertiesUpdate(pathItem.Ancestor);
         }

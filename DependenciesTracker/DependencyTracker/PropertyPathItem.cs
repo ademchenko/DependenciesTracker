@@ -6,34 +6,34 @@ namespace DependenciesTracker
     internal class PropertyPathItem<T> : PathItemBase<T>
     {
         [NotNull]
-        private readonly Func<object, object> _propertyGetter;
+        private readonly Func<object, object> _propertyOrFieldGetter;
 
         [NotNull]
-        private readonly string _propertyName;
+        private readonly string _propertyOrFieldName;
 
-        public PropertyPathItem([NotNull] Func<object, object> propertyGetter, [NotNull] string propertyName,
-            [CanBeNull] PathItemBase<T> ancestor, [CanBeNull] Action<T> updateDependentPropertyAction)
-            : base(ancestor, updateDependentPropertyAction)
+        public PropertyPathItem([NotNull] Func<object, object> propertyOrFieldGetter, [NotNull] string propertyOrFieldName,
+            [CanBeNull] PathItemBase<T> ancestor, [CanBeNull] Action<T> updateDependentPropertyOrFieldAction)
+            : base(ancestor, updateDependentPropertyOrFieldAction)
         {
-            _propertyGetter = propertyGetter;
-            _propertyName = propertyName;
+            _propertyOrFieldGetter = propertyOrFieldGetter;
+            _propertyOrFieldName = propertyOrFieldName;
         }
 
         [NotNull]
-        public Func<object, object> PropertyGetter
+        public Func<object, object> PropertyOrFieldGetter
         {
-            get { return _propertyGetter; }
+            get { return _propertyOrFieldGetter; }
         }
 
         [NotNull]
-        public string PropertyName
+        public string PropertyOrFieldName
         {
-            get { return _propertyName; }
+            get { return _propertyOrFieldName; }
         }
 
         protected override string StringRep
         {
-            get { return PropertyName != string.Empty ? PropertyName : "root"; }
+            get { return PropertyOrFieldName != string.Empty ? PropertyOrFieldName : "root"; }
         }
     }
 }

@@ -51,7 +51,7 @@ namespace DependenciesTracker
                 if (PathItem.Ancestor == null)
                     return null;
 
-                var ancestorEffectiveObject = PathItem.PropertyGetter(EffectiveObject);
+                var ancestorEffectiveObject = PathItem.PropertyOrFieldGetter(EffectiveObject);
 
                 return ancestorEffectiveObject == null ? null : CreateSubscriber(ancestorEffectiveObject, PathItem.Ancestor, OnChanged);
             }
@@ -64,7 +64,7 @@ namespace DependenciesTracker
                 _observer = Observable.FromEventPattern<PropertyChangedEventHandler, PropertyChangedEventArgs>(
                     h => notifyPropertyChange.PropertyChanged += h,
                     h => notifyPropertyChange.PropertyChanged -= h)
-                    .Where(sa => sa.EventArgs.PropertyName == PathItem.PropertyName)
+                    .Where(sa => sa.EventArgs.PropertyName == PathItem.PropertyOrFieldName)
                     .Subscribe(_ => OnObservedPropertyChanged());
             }
 
@@ -195,7 +195,7 @@ namespace DependenciesTracker
             [NotNull]
             private readonly IList<SubscriberBase> _ancestors = new List<SubscriberBase>();
 
-            public object EffectiveObject
+            protected object EffectiveObject
             {
                 get { return _effectiveObject; }
             }
@@ -211,7 +211,7 @@ namespace DependenciesTracker
                 var propertyPathItem = pathItem as PropertyPathItem<T>;
                 if (propertyPathItem != null)
                 {
-                    if (propertyPathItem.PropertyName == string.Empty)
+                    if (propertyPathItem.PropertyOrFieldName == string.Empty)
                         return new RootObjectSubscriber(effectiveObject, pathItem, onChanged);
 
                     return new PropertyChangeSubscriber(effectiveObject, propertyPathItem, onChanged);

@@ -5,8 +5,8 @@ namespace DependenciesTracker
 {
     internal class CollectionPathItem<T> : PathItemBase<T>
     {
-        public CollectionPathItem([CanBeNull] PathItemBase<T> ancestor, [CanBeNull] Action<T> updateDependentPropertyAction)
-            : base(ancestor, updateDependentPropertyAction) { }
+        public CollectionPathItem([CanBeNull] PathItemBase<T> ancestor, [CanBeNull] Action<T> updateDependentPropertyOrFieldAction)
+            : base(ancestor, updateDependentPropertyOrFieldAction) { }
 
         protected override string StringRep
         {

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Linq.Expressions;
+using DependenciesTracker.Interfaces;
 using Xunit;
 using Xunit.Extensions;
 
@@ -16,18 +17,25 @@ namespace DependenciesTracker.Tests.PathBuilding
     public class PathBuildingTestClass : IPathBuildingTestClass
     {
         public int IntProperty { get; set; }
+        public int IntField;
+        public readonly int IntFieldReadOnly = -1;
 
         public int DependentProperty { get; set; }
 
-        public List<string> Strings { get; set; }
+        public IList<string> Strings { get; set; }
         public List<List<string>> StringLists { get; set; }
 
         public List<int> Ints { get; set; }
         public List<List<int>> IntLists { get; set; }
 
         public string StringProperty { get; set; }
+        public string StringField;
+        public readonly string StringFieldReadOnly = string.Empty;
 
         public PathBuildingInnerTestClass InnerProperty { get; set; }
+        public PathBuildingInnerTestClass InnerField;
+
+        public readonly PathBuildingInnerTestClass InnerFieldReadOnly = new PathBuildingInnerTestClass();
 
         public PathBuildingTestClass Child { get; set; }
     }
@@ -40,14 +48,18 @@ namespace DependenciesTracker.Tests.PathBuilding
     public class PathBuildingInnerTestClass
     {
         public int IntProperty { get; set; }
+        public int IntField;
+        public int IntFieldReadOnly = -1;
         public string StringProperty { get; set; }
+        public string StringField;
+        public readonly string StringFieldReadOnly = string.Empty;
     }
 
     public static class IntegerExtension
     {
         public static string ExtensionCall(this int i)
         {
-            throw new NotImplementedException();
+            throw new NotSupportedException("Call of this method is not supported");
         }
     }
 
@@ -59,6 +71,60 @@ namespace DependenciesTracker.Tests.PathBuilding
         }
     }
 
+    public class PathBuildingTestClassWithPrivatePropertiesAndFields
+    {
+        private int _priceProperty { get; set; }
+        private int _quantityProperty { get; set; }
+
+        private int _costProperty { get; set; }
+
+        private int _priceField;
+        private int _quantityField;
+
+        private int _costField;
+
+        public int GetCostProperty() { return _costProperty; }
+        public int GetCostField() { return _costField; }
+
+        public static readonly DependenciesMap<PathBuildingTestClassWithPrivatePropertiesAndFields> PropertiesDependenciesMap;
+        public static readonly DependenciesMap<PathBuildingTestClassWithPrivatePropertiesAndFields> FieldsDependenciesMap;
+
+        static PathBuildingTestClassWithPrivatePropertiesAndFields()
+        {
+            PropertiesDependenciesMap = new DependenciesMap<PathBuildingTestClassWithPrivatePropertiesAndFields>();
+            PropertiesDependenciesMap.AddMap(o => o._costProperty, o => o._priceProperty * o._quantityProperty, o => o._priceProperty,
+                            o => o._quantityProperty);
+
+            FieldsDependenciesMap = new DependenciesMap<PathBuildingTestClassWithPrivatePropertiesAndFields>();
+            FieldsDependenciesMap.AddMap(o => o._costField, o => o._priceField * o._quantityField, o => o._priceField,
+                            o => o._quantityField);
+        }
+
+        private PathBuildingTestClassWithPrivatePropertiesAndFields() { }
+
+        public static PathBuildingTestClassWithPrivatePropertiesAndFields CreateWithPrivateProperties(int price, int quantity)
+        {
+            var obj = new PathBuildingTestClassWithPrivatePropertiesAndFields
+            {
+                _priceProperty = price,
+                _quantityProperty = quantity
+            };
+
+            return obj;
+        }
+
+
+        public static PathBuildingTestClassWithPrivatePropertiesAndFields CreateWithPrivateFields(int price, int quantity)
+        {
+            var obj = new PathBuildingTestClassWithPrivatePropertiesAndFields
+            {
+                _priceField = price,
+                _quantityField = quantity
+            };
+
+            return obj;
+        }
+    }
 
     public class PathBuildingTests
     {
@@ -209,6 +275,133 @@ namespace DependenciesTracker.Tests.PathBuilding
                     new[] {"root", "InnerProperty", "IntProperty"}
                 };
 
+                //Simple reference type field
+                yield return new object[]
+                {
+                    (Expression<Func<PathBuildingTestClass, object>>)(o => o.StringField),
+                    new[] {"root", "StringField"}
+                };
+
+                //Simple value type field
+                yield return new object[]
+                {
+                    (Expression<Func<PathBuildingTestClass, object>>)(o => o.IntField),
+                    new[] {"root", "IntField"}
+                };
+
+                //Simple reference type field chain
+                yield return new object[]
+                {
+                    (Expression<Func<PathBuildingTestClass, object>>)(o => o.InnerField.StringField),
+                    new[] {"root", "InnerField", "StringField"}
+                };
+
+                //Simple field chain with the value type field in the end of chain
+                yield return new object[]
+                {
+                    (Expression<Func<PathBuildingTestClass, object>>)(o => o.InnerField.IntField),
+                    new[] {"root", "InnerField", "IntField"}
+                };
+
+                //Simple property chain with a field in the middle and reference type property in the end
+                yield return new object[]
+                {
+                    (Expression<Func<PathBuildingTestClass, object>>)(o => o.InnerField.StringProperty),
+                    new[] {"root", "InnerField", "StringProperty"}
+                };
+
+                //Simple property chain with a field in the middle and value type property in the end
+                yield return new object[]
+                {
+                    (Expression<Func<PathBuildingTestClass, object>>)(o => o.InnerField.IntProperty),
+                    new[] {"root", "InnerField", "IntProperty"}
+                };
+
+                //Simple reference type readonly field
+                yield return new object[]
+                {
+                    (Expression<Func<PathBuildingTestClass, object>>)(o => o.StringFieldReadOnly),
+                    new[] {"root", "StringFieldReadOnly"}
+                };
+
+                //Simple value type readonly field
+                yield return new object[]
+                {
+                    (Expression<Func<PathBuildingTestClass, object>>)(o => o.IntFieldReadOnly),
+                    new[] {"root", "IntFieldReadOnly"}
+                };
+
+                //Simple reference type readonly field -> field chain
+                yield return new object[]
+                {
+                    (Expression<Func<PathBuildingTestClass, object>>)(o => o.InnerFieldReadOnly.StringField),
+                    new[] {"root", "InnerFieldReadOnly", "StringField"}
+                };
+
+                //Simple reference type readonly field -> property chain
+                yield return new object[]
+                {
+                    (Expression<Func<PathBuildingTestClass, object>>)(o => o.InnerFieldReadOnly.StringProperty),
+                    new[] {"root", "InnerFieldReadOnly", "StringProperty"}
+                };
+
+
+                //Simple reference type field -> readonly field chain
+                yield return new object[]
+                {
+                    (Expression<Func<PathBuildingTestClass, object>>)(o => o.InnerField.StringFieldReadOnly),
+                    new[] {"root", "InnerField", "StringFieldReadOnly"}
+                };
+
+                //Simple property -> readonly field chain
+                yield return new object[]
+                {
+                    (Expression<Func<PathBuildingTestClass, object>>)(o => o.InnerProperty.StringFieldReadOnly),
+                    new[] {"root", "InnerProperty", "StringFieldReadOnly"}
+                };
+
+                //Simple reference type readonly field -> readonly field chain
+                yield return new object[]
+                {
+                    (Expression<Func<PathBuildingTestClass, object>>)(o => o.InnerFieldReadOnly.StringFieldReadOnly),
+                    new[] {"root", "InnerFieldReadOnly", "StringFieldReadOnly"}
+                };
+
+                //Simple readonly field -> field chain with value type field in the end of chain
+                yield return new object[]
+                {
+                    (Expression<Func<PathBuildingTestClass, object>>)(o => o.InnerFieldReadOnly.IntField),
+                    new[] {"root", "InnerFieldReadOnly", "IntField"}
+                };
+
+                //Simple readonly field -> readonly field chain with value type field in the end of chain
+                yield return new object[]
+                {
+                    (Expression<Func<PathBuildingTestClass, object>>)(o => o.InnerFieldReadOnly.IntFieldReadOnly),
+                    new[] {"root", "InnerFieldReadOnly", "IntFieldReadOnly"}
+                };
+
+                //Simple field -> readonly field chain with value type field in the end of chain
+                yield return new object[]
+                {
+                    (Expression<Func<PathBuildingTestClass, object>>)(o => o.InnerField.IntFieldReadOnly),
+                    new[] {"root", "InnerField", "IntFieldReadOnly"}
+                };
+
+                //Simple property chain with a readonly field in the middle and reference type property in the end
+                yield return new object[]
+                {
+                    (Expression<Func<PathBuildingTestClass, object>>)(o => o.InnerFieldReadOnly.StringProperty),
+                    new[] {"root", "InnerFieldReadOnly", "StringProperty"}
+                };
+
+                //Simple property chain with a readonly field in the middle and value type property in the end
+                yield return new object[]
+                {
+                    (Expression<Func<PathBuildingTestClass, object>>)(o => o.InnerFieldReadOnly.IntProperty),
+                    new[] {"root", "InnerFieldReadOnly", "IntProperty"}
+                };
+
                 //Property chain with collection item of reference type
                 yield return new object[]
                 {
@@ -268,6 +461,16 @@ namespace DependenciesTracker.Tests.PathBuilding
 
         //Reproduces the https://github.com/ademchenko/DependenciesTracker/issues/3
         [Fact]
+        public void AddDependency_PropertyChainWithCollectionItemAtTheBegginningAndPropertyInTheEnd_Supported()
+        {
+            var map = new DependenciesMap<PathBuildingCollectionTestClass<string>>();
+            map.AddMap(o => o.IntProperty, o => -1, o => DependenciesTracker.CollectionExtensions.EachElement(o).Length);
+
+            Assert.Equal(new[] { "root", "CollectionItem", "Length" }, map.MapItems.Single().PathStrings);
+        }
+
+        //Reproduces the https://github.com/ademchenko/DependenciesTracker/issues/3
+        [Fact]
         public void AddDependency_PropertyChainWithCollectionItemOfCollectionItemAtTheBegginning_Supported()
         {
             var map = new DependenciesMap<PathBuildingCollectionTestClass<List<string>>>();
@@ -284,6 +487,99 @@ namespace DependenciesTracker.Tests.PathBuilding
 
             Assert.Equal(new[] { "root", "CollectionItem", "CollectionItem", "Length" }, map.MapItems.Single().PathStrings);
         }
+
+        [Fact]
+        public void AddDependency_PrivatePropertiesInDependencyPath_Supported()
+        {
+            var random = new Random();
+            var expectedPrice = random.Next(1, 100);
+            var expectedQuantity = random.Next(100, 200);
+            var expectedCost = expectedPrice * expectedQuantity;
+
+            var mapItems = PathBuildingTestClassWithPrivatePropertiesAndFields.PropertiesDependenciesMap.MapItems;
+            Assert.Equal(2, mapItems.Count);
+
+            var pricePropertyPathItemWithRoot = mapItems.Single(mi => mi.PathStrings.Skip(1).Single() == "_priceProperty");
+            var quantityPropertyPathItemWithRoot = mapItems.Single(mi => mi.PathStrings.Skip(1).Single() == "_quantityProperty");
+
+            var pricePropertyPathItem = pricePropertyPathItemWithRoot.Ancestor;
+            var quantityPropertyPathItem = quantityPropertyPathItemWithRoot.Ancestor;
+
+            Assert.Equal("root", pricePropertyPathItemWithRoot.PathStrings.First());
+            Assert.Equal("root", quantityPropertyPathItemWithRoot.PathStrings.First());
+
+            //Test compiled getters
+
+            var obj = PathBuildingTestClassWithPrivatePropertiesAndFields.CreateWithPrivateProperties(expectedPrice, expectedQuantity);
+
+            var actualPrice = (int)((PropertyPathItem<PathBuildingTestClassWithPrivatePropertiesAndFields>)pricePropertyPathItem).PropertyOrFieldGetter(obj);
+            var actualQuantity = (int)((PropertyPathItem<PathBuildingTestClassWithPrivatePropertiesAndFields>)quantityPropertyPathItem).PropertyOrFieldGetter(obj);
+
+            Assert.Equal(expectedPrice, actualPrice);
+            Assert.Equal(expectedQuantity, actualQuantity);
+
+            //Test compiled setter
+            Assert.Equal(0, obj.GetCostProperty());
+
+            pricePropertyPathItem.UpdateDependentPropertyOrFieldAction(obj);
+
+            Assert.Equal(expectedCost, obj.GetCostProperty());
+
+            obj = PathBuildingTestClassWithPrivatePropertiesAndFields.CreateWithPrivateProperties(expectedPrice, expectedQuantity);
+
+            Assert.Equal(0, obj.GetCostProperty());
+
+            quantityPropertyPathItem.UpdateDependentPropertyOrFieldAction(obj);
+
+            Assert.Equal(expectedCost, obj.GetCostProperty());
+        }
+
+        [Fact]
+        public void AddDependency_PrivateFieldsInDependencyPath_Supported()
+        {
+            var random = new Random();
+            var expectedPrice = random.Next(1, 100);
+            var expectedQuantity = random.Next(100, 200);
+            var expectedCost = expectedPrice * expectedQuantity;
+
+            var mapItems = PathBuildingTestClassWithPrivatePropertiesAndFields.FieldsDependenciesMap.MapItems;
+            Assert.Equal(2, mapItems.Count);
+
+            var priceFieldPathItemWithRoot = mapItems.Single(mi => mi.PathStrings.Skip(1).Single() == "_priceField");
+            var quantityFieldPathItemWithRoot = mapItems.Single(mi => mi.PathStrings.Skip(1).Single() == "_quantityField");
+
+            var priceFieldPathItem = priceFieldPathItemWithRoot.Ancestor;
+            var quantityFieldPathItem = quantityFieldPathItemWithRoot.Ancestor;
+
+            Assert.Equal("root", priceFieldPathItemWithRoot.PathStrings.First());
+            Assert.Equal("root", quantityFieldPathItemWithRoot.PathStrings.First());
+
+            //Test compiled getters
+
+            var obj = PathBuildingTestClassWithPrivatePropertiesAndFields.CreateWithPrivateFields(expectedPrice, expectedQuantity);
+
+            var actualPrice = (int)((PropertyPathItem<PathBuildingTestClassWithPrivatePropertiesAndFields>)priceFieldPathItem).PropertyOrFieldGetter(obj);
+            var actualQuantity = (int)((PropertyPathItem<PathBuildingTestClassWithPrivatePropertiesAndFields>)quantityFieldPathItem).PropertyOrFieldGetter(obj);
+
+            Assert.Equal(expectedPrice, actualPrice);
+            Assert.Equal(expectedQuantity, actualQuantity);
+
+            //Test compiled setter
+            Assert.Equal(0, obj.GetCostField());
+
+            priceFieldPathItem.UpdateDependentPropertyOrFieldAction(obj);
+
+            Assert.Equal(expectedCost, obj.GetCostField());
+
+            obj = PathBuildingTestClassWithPrivatePropertiesAndFields.CreateWithPrivateFields(expectedPrice, expectedQuantity);
+
+            Assert.Equal(0, obj.GetCostField());
+
+            quantityFieldPathItem.UpdateDependentPropertyOrFieldAction(obj);
+
+            Assert.Equal(expectedCost, obj.GetCostField());
+        }
+
         private static void SupportedPathsTestImpl(Expression<Func<PathBuildingTestClass, object>> path, string[] expectedParseResult)
         {
             var map = new DependenciesMap<PathBuildingTestClass>();

@@ -125,11 +125,12 @@ namespace DependenciesTracker
         }
 
         [NotNull]
-        private static Func<object, object> BuildGetter([NotNull] Type parameterType, [NotNull] string propertyName)
+        private static Func<object, object> BuildGetter([NotNull] Type parameterType, [NotNull] string propertyOrFieldName)
         {
             var parameter = Expression.Parameter(typeof(object), "obj");
             var convertedParameter = Expression.Convert(parameter, parameterType);
-            var propertyGetter = Expression.Property(convertedParameter, propertyName);
+            var propertyGetter = Expression.Property(convertedParameter, propertyOrFieldName);
+            
             Debug.WriteLine(propertyGetter);
 
             var lambdaExpression = Expression.Lambda<Func<object, object>>(Expression.Convert(propertyGetter, typeof(object)), parameter);

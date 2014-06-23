@@ -9,7 +9,7 @@ namespace DependenciesTracker
         [CanBeNull]
         private readonly PathItemBase<T> _ancestor;
         [CanBeNull]
-        private readonly Action<T> _updateDependentPropertyAction;
+        private readonly Action<T> _updateDependentPropertyOrFieldAction;
 
         [CanBeNull]
         public PathItemBase<T> Ancestor
@@ -18,15 +18,15 @@ namespace DependenciesTracker
         }
 
         [CanBeNull]
-        public Action<T> UpdateDependentPropertyAction
+        public Action<T> UpdateDependentPropertyOrFieldAction
         {
-            get { return _updateDependentPropertyAction; }
+            get { return _updateDependentPropertyOrFieldAction; }
         }
 
-        protected PathItemBase([CanBeNull] PathItemBase<T> ancestor, [CanBeNull] Action<T> updateDependentPropertyAction)
+        protected PathItemBase([CanBeNull] PathItemBase<T> ancestor, [CanBeNull] Action<T> updateDependentPropertyOrFieldAction)
         {
             _ancestor = ancestor;
-            _updateDependentPropertyAction = updateDependentPropertyAction;
+            _updateDependentPropertyOrFieldAction = updateDependentPropertyOrFieldAction;
         }
 
         [NotNull]
