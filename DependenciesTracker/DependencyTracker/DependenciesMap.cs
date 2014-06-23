@@ -129,7 +129,7 @@ namespace DependenciesTracker
         {
             var parameter = Expression.Parameter(typeof(object), "obj");
             var convertedParameter = Expression.Convert(parameter, parameterType);
-            var propertyGetter = Expression.Property(convertedParameter, propertyOrFieldName);
+            var propertyGetter = Expression.PropertyOrField(convertedParameter, propertyOrFieldName);
             
             Debug.WriteLine(propertyGetter);
 
