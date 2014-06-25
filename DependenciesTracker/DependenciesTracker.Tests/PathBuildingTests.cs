@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Linq.Expressions;
-using DependenciesTracker.Interfaces;
 using Xunit;
 using Xunit.Extensions;
 
@@ -43,6 +42,8 @@ namespace DependenciesTracker.Tests.PathBuilding
     public class PathBuildingCollectionTestClass<T> : ObservableCollection<T>
     {
         public int IntProperty { get; set; }
+
+        public int DependentProperty { get; set; }
     }
 
     public class PathBuildingInnerTestClass
@@ -578,6 +579,180 @@ namespace DependenciesTracker.Tests.PathBuilding
             quantityFieldPathItem.UpdateDependentPropertyOrFieldAction(obj);
 
             Assert.Equal(expectedCost, obj.GetCostField());
+        }
+
+        [Fact]
+        public void AddDependency_OneLevelRefTypePropertyGetter_Success()
+        {
+            var map = new DependenciesMap<PathBuildingTestClass>();
+            map.AddMap(o => o.DependentProperty, o => -1, o => o.IntProperty);
+
+            var obj = new PathBuildingTestClass();
+            var intPropertyExpectedValue = new Random().Next(100, 200);
+            obj.IntProperty = intPropertyExpectedValue;
+            var intPropertyMapItem = (PropertyPathItem<PathBuildingTestClass>)map.MapItems.Single().Ancestor;
+            Assert.Equal("IntProperty", intPropertyMapItem.PathStrings.Single());
+
+            var getResult = intPropertyMapItem.PropertyOrFieldGetter(obj);
+
+            Assert.Equal(intPropertyExpectedValue, getResult);
+        }
+
+        [Fact]
+        public void AddDependency_OneLevelValTypePropertyGetter_Success()
+        {
+            var map = new DependenciesMap<PathBuildingTestClass>();
+            map.AddMap(o => o.DependentProperty, o => -1, o => o.StringProperty);
+
+            var obj = new PathBuildingTestClass();
+            var stringPropertyExpectedValue = Guid.NewGuid().ToString();
+            obj.StringProperty = stringPropertyExpectedValue;
+            var stringPropertyPathItem = (PropertyPathItem<PathBuildingTestClass>)map.MapItems.Single().Ancestor;
+            Assert.Equal("StringProperty", stringPropertyPathItem.PathStrings.Single());
+
+            var getResult = stringPropertyPathItem.PropertyOrFieldGetter(obj);
+
+            Assert.Equal(stringPropertyExpectedValue, getResult);
+        }
+
+        [Fact]
+        public void AddDependency_OneLevelRefTypeFieldGetter_Success()
+        {
+            var map = new DependenciesMap<PathBuildingTestClass>();
+            map.AddMap(o => o.DependentProperty, o => -1, o => o.IntField);
+
+            var obj = new PathBuildingTestClass();
+            var intFieldExpectedValue = new Random().Next(100, 200);
+            obj.IntField = intFieldExpectedValue;
+            var intFieldMapItem = (PropertyPathItem<PathBuildingTestClass>)map.MapItems.Single().Ancestor;
+            Assert.Equal("IntField", intFieldMapItem.PathStrings.Single());
+
+            var getResult = intFieldMapItem.PropertyOrFieldGetter(obj);
+
+            Assert.Equal(intFieldExpectedValue, getResult);
+        }
+
+        [Fact]
+        public void AddDependency_OneLevelValTypeFieldGetter_Success()
+        {
+            var map = new DependenciesMap<PathBuildingTestClass>();
+            map.AddMap(o => o.DependentProperty, o => -1, o => o.StringField);
+
+            var obj = new PathBuildingTestClass();
+            var stringFieldExpectedValue = Guid.NewGuid().ToString();
+            obj.StringField = stringFieldExpectedValue;
+            var stringFieldPathItem = (PropertyPathItem<PathBuildingTestClass>)map.MapItems.Single().Ancestor;
+            Assert.Equal("StringField", stringFieldPathItem.PathStrings.Single());
+
+            var getResult = stringFieldPathItem.PropertyOrFieldGetter(obj);
+
+            Assert.Equal(stringFieldExpectedValue, getResult);
+        }
+
+        [Fact]
+        public void AddDependency_SecondLevelPropertyGetter_Success()
+        {
+            var map = new DependenciesMap<PathBuildingTestClass>();
+            map.AddMap(o => o.DependentProperty, o => -1, o => o.InnerProperty.IntProperty);
+
+            var obj = new PathBuildingTestClass();
+
+            var expectedInnerPropertyValue = new PathBuildingInnerTestClass();
+            var expectedIntPropertyValue = new Random().Next(100, 200);
+
+            obj.InnerProperty = expectedInnerPropertyValue;
+            expectedInnerPropertyValue.IntProperty = expectedIntPropertyValue;
+
+            var innerPropertyMapItem = (PropertyPathItem<PathBuildingTestClass>)map.MapItems.Single().Ancestor;
+            var intPropertyMapItem = (PropertyPathItem<PathBuildingTestClass>)innerPropertyMapItem.Ancestor;
+
+            Assert.Equal(expectedInnerPropertyValue, innerPropertyMapItem.PropertyOrFieldGetter(obj));
+            Assert.Equal(expectedIntPropertyValue, intPropertyMapItem.PropertyOrFieldGetter(expectedInnerPropertyValue));
+        }
+
+        [Fact]
+        public void AddDependency_CollectionElementAtTheBeginningOfThePathPropertyGetter_Success()
+        {
+            var map = new DependenciesMap<PathBuildingCollectionTestClass<string>>();
+            map.AddMap(o => o.IntProperty, o => -1, o => DependenciesTracker.CollectionExtensions.EachElement(o).Length);
+
+            var expectedStringLength = new Random().Next(1, 10);
+            var obj = new string('a', expectedStringLength);
+
+            var collectionItemPathItem = map.MapItems.Single().Ancestor;
+            Assert.IsType<CollectionPathItem<PathBuildingCollectionTestClass<string>>>(collectionItemPathItem);
+            var lengthPathItem = (PropertyPathItem<PathBuildingCollectionTestClass<string>>)collectionItemPathItem.Ancestor;
+            Assert.Equal("Length", lengthPathItem.PathStrings.Single());
+
+            var actualStringLength = lengthPathItem.PropertyOrFieldGetter(obj);
+            
+            Assert.Equal(expectedStringLength, actualStringLength);
+        }
+
+        [Fact]
+        public void AddDependency_CollectionElementOfPropertyPropertyGetter_Success()
+        {
+            var map = new DependenciesMap<PathBuildingTestClass>();
+            map.AddMap(o => o.DependentProperty, o => -1, o => DependenciesTracker.CollectionExtensions.EachElement(o.Strings).Length);
+
+            var rootPathItem = map.MapItems.Single();
+            Assert.Equal("root", rootPathItem.PathStrings.First());
+
+            var stringsPathItem = (PropertyPathItem<PathBuildingTestClass>)rootPathItem.Ancestor;
+            Assert.Equal("Strings", stringsPathItem.PropertyOrFieldName);
+
+            var stringsCollectionItem = (CollectionPathItem<PathBuildingTestClass>)stringsPathItem.Ancestor;
+
+            var lengthPathItem = (PropertyPathItem<PathBuildingTestClass>) stringsCollectionItem.Ancestor;
+            Assert.Equal("Length", lengthPathItem.PathStrings.Single());
+
+            var rootObject = new PathBuildingTestClass();
+            var expectedStringsValue = new List<string>();
+            
+            rootObject.Strings = expectedStringsValue;
+
+            Assert.Equal(expectedStringsValue, stringsPathItem.PropertyOrFieldGetter(rootObject));
+
+            var expectedStringLength = new Random().Next(1, 10);
+            var obj = new string('a', expectedStringLength);
+
+            var actualStringLength = lengthPathItem.PropertyOrFieldGetter(obj);
+
+            Assert.Equal(expectedStringLength, actualStringLength);
+        }
+
+        [Fact]
+        public void AddDependency_CollectionElementOfCollectionElementOfPropertyPropertyGetter_Success()
+        {
+            var map = new DependenciesMap<PathBuildingTestClass>();
+            map.AddMap(o => o.DependentProperty, o => -1, 
+                o => DependenciesTracker.CollectionExtensions.EachElement(DependenciesTracker.CollectionExtensions.EachElement(o.StringLists)).Length);
+
+            var rootPathItem = map.MapItems.Single();
+            Assert.Equal("root", rootPathItem.PathStrings.First());
+
+            var stringListsPathItem = (PropertyPathItem<PathBuildingTestClass>)rootPathItem.Ancestor;
+            Assert.Equal("StringLists", stringListsPathItem.PropertyOrFieldName);
+
+            var stringListsCollectionItem = (CollectionPathItem<PathBuildingTestClass>)stringListsPathItem.Ancestor;
+            var stringListsCollectionItemCollectionItem = (CollectionPathItem<PathBuildingTestClass>)stringListsCollectionItem.Ancestor;
+
+            var lengthPathItem = (PropertyPathItem<PathBuildingTestClass>)stringListsCollectionItemCollectionItem.Ancestor;
+            Assert.Equal("Length", lengthPathItem.PathStrings.Single());
+
+            var rootObject = new PathBuildingTestClass();
+            var expectedStringListsValue = new List<List<string>>();
+
+            rootObject.StringLists = expectedStringListsValue;
+
+            Assert.Equal(expectedStringListsValue, stringListsPathItem.PropertyOrFieldGetter(rootObject));
+
+            var expectedStringLength = new Random().Next(1, 10);
+            var obj = new string('a', expectedStringLength);
+
+            var actualStringLength = lengthPathItem.PropertyOrFieldGetter(obj);
+
+            Assert.Equal(expectedStringLength, actualStringLength);
         }
 
         private static void SupportedPathsTestImpl(Expression<Func<PathBuildingTestClass, object>> path, string[] expectedParseResult)
