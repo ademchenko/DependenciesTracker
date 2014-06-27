@@ -37,6 +37,10 @@ namespace DependenciesTracker.Tests.PathBuilding
         public readonly PathBuildingInnerTestClass InnerFieldReadOnly = new PathBuildingInnerTestClass();
 
         public PathBuildingTestClass Child { get; set; }
+
+        public readonly int DependentFieldReadOnly = -1;
+
+        public int DependentPropertyReadOnly { get { return -1; } }
     }
 
     public class PathBuildingCollectionTestClass<T> : ObservableCollection<T>
@@ -753,6 +757,27 @@ namespace DependenciesTracker.Tests.PathBuilding
             var actualStringLength = lengthPathItem.PropertyOrFieldGetter(obj);
 
             Assert.Equal(expectedStringLength, actualStringLength);
+        }
+
+        public static IEnumerable<object[]> AddDependency_ReadOnlyDependentPropertyOrField_NotSupported_TestData
+        {
+            get
+            {
+                yield return new object[] { (Expression<Func<PathBuildingTestClass, int>>)(o => o.DependentFieldReadOnly) };
+                yield return new object[] { (Expression<Func<PathBuildingTestClass, int>>)(o => o.DependentPropertyReadOnly) };
+            }
+        }
+
+        [Theory]
+        [PropertyData("AddDependency_ReadOnlyDependentPropertyOrField_NotSupported_TestData")]
+        public void AddDependency_ReadOnlyDependentPropertyOrField_NotSupported(
+            Expression<Func<PathBuildingTestClass, int>> dependentPropertyExpression)
+        {
+            var map = new DependenciesMap<PathBuildingTestClass>();
+
+            //Alexander Demchenko: Actually ArgumentException is raised by an internal method
+            //of Expression.Assign implementation, so not by argument checks of AddMap, but it's enough for now
+            Assert.Throws<ArgumentException>(() => map.AddMap(dependentPropertyExpression, o => -1, o => o.IntProperty));
         }
 
         private static void SupportedPathsTestImpl(Expression<Func<PathBuildingTestClass, object>> path, string[] expectedParseResult)
