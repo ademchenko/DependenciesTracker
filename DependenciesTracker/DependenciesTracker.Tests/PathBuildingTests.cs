@@ -21,6 +21,8 @@ namespace DependenciesTracker.Tests.PathBuilding
 
         public int DependentProperty { get; set; }
 
+        public object ObjectDependentProperty { get; set; }
+
         public IList<string> Strings { get; set; }
         public List<List<string>> StringLists { get; set; }
 
@@ -780,6 +782,9 @@ namespace DependenciesTracker.Tests.PathBuilding
             Assert.Throws<ArgumentException>(() => map.AddMap(dependentPropertyExpression, o => -1, o => o.IntProperty));
         }
 
+        /// <summary>
+        /// This test data set reproduces the <see cref="https://github.com/ademchenko/DependenciesTracker/issues/5"/> issue
+        /// </summary>
         public static IEnumerable<object[]> AddDependency_DependentPropertyOrField_Chains_NotSupported_TestData
         {
             get
@@ -796,7 +801,35 @@ namespace DependenciesTracker.Tests.PathBuilding
             Expression<Func<PathBuildingTestClass, int>> dependentPropertyExpression)
         {
             var map = new DependenciesMap<PathBuildingTestClass>();
-            Assert.Throws<ArgumentException>(() => map.AddMap(dependentPropertyExpression, o => -1, o => o.IntProperty));
+            Assert.Throws<NotSupportedException>(() => map.AddMap(dependentPropertyExpression, o => -1, o => o.IntProperty));
+        }
+
+        [Fact]
+        public void AddDependency_DependentPropertyOrField_Conversions_NotSupported_1()
+        {
+            var map = new DependenciesMap<PathBuildingTestClass>();
+            Assert.Throws<NotSupportedException>(() => map.AddMap<object>(o => o.DependentProperty, o => -1, o => o.IntProperty));
+        }
+
+        [Fact]
+        public void AddDependency_DependentPropertyOrField_Conversions_NotSupported_2()
+        {
+            var map = new DependenciesMap<PathBuildingTestClass>();
+            Assert.Throws<NotSupportedException>(() => map.AddMap(o => (int)o.ObjectDependentProperty, o => -1, o => o.IntProperty));
+        }
+
+        [Fact]
+        public void AddDependency_DependentPropertyOrField_InstanceMethodCalls_NotSupported()
+        {
+            var map = new DependenciesMap<PathBuildingTestClass>();
+            Assert.Throws<NotSupportedException>(() => map.AddMap(o => o.DependentProperty.ToString(), o => "-1", o => o.IntProperty));
+        }
+
+        [Fact]
+        public void AddDependency_DependentPropertyOrField_ExtensionMethodCalls_NotSupported()
+        {
+            var map = new DependenciesMap<PathBuildingTestClass>();
+            Assert.Throws<NotSupportedException>(() => map.AddMap(o => o.DependentProperty.ExtensionCall(), o => "-1", o => o.IntProperty));
         }
 
         private static void SupportedPathsTestImpl(Expression<Func<PathBuildingTestClass, object>> path, string[] expectedParseResult)

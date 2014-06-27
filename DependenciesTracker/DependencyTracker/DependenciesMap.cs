@@ -55,13 +55,30 @@ namespace DependenciesTracker
         [NotNull]
         private static Action<T, U> BuildSetter<U>([NotNull] Expression<Func<T, U>> dependentProperty)
         {
-            var memberExpression = (MemberExpression)dependentProperty.Body;
+            Debug.Assert(dependentProperty.Body != null);
+
+            var memberExpression = dependentProperty.Body as MemberExpression;
+            if (memberExpression == null)
+                ThrowNotSupportedExpressionForDependentProperty(dependentProperty.Body);
+
+            if (!(memberExpression.Expression is ParameterExpression))
+                ThrowNotSupportedExpressionForDependentProperty(memberExpression);
+
             var objectParameter = Expression.Parameter(typeof(T), "obj");
             var assignParameter = Expression.Parameter(typeof(U), "val");
             var property = Expression.PropertyOrField(objectParameter, memberExpression.Member.Name);
             var lambda = Expression.Lambda<Action<T, U>>(Expression.Assign(property, assignParameter), objectParameter, assignParameter);
             Debug.WriteLine(lambda);
             return lambda.Compile();
+        }
+
+        private static void ThrowNotSupportedExpressionForDependentProperty(Expression notSuppportedExpression)
+        {
+            Debug.Assert(notSuppportedExpression != null);
+
+            throw new NotSupportedException(
+                string.Format("Expression {0} is not supported. The only property or field member expression with no chains (i.e. one level from root object) is supported.",
+                    notSuppportedExpression));
         }
 
         [NotNull]
