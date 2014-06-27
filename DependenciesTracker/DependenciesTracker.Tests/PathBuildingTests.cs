@@ -780,6 +780,25 @@ namespace DependenciesTracker.Tests.PathBuilding
             Assert.Throws<ArgumentException>(() => map.AddMap(dependentPropertyExpression, o => -1, o => o.IntProperty));
         }
 
+        public static IEnumerable<object[]> AddDependency_DependentPropertyOrField_Chains_NotSupported_TestData
+        {
+            get
+            {
+                yield return new object[] { (Expression<Func<PathBuildingTestClass, int>>)(o => o.InnerProperty.IntProperty) };
+                yield return new object[] { (Expression<Func<PathBuildingTestClass, int>>)(o => o.InnerField.IntProperty) };
+                yield return new object[] { (Expression<Func<PathBuildingTestClass, int>>)(o => o.InnerField.IntField) };
+            }
+        }
+
+        [Theory]
+        [PropertyData("AddDependency_DependentPropertyOrField_Chains_NotSupported_TestData")]
+        public void AddDependency_DependentPropertyOrField_Chains_NotSupported(
+            Expression<Func<PathBuildingTestClass, int>> dependentPropertyExpression)
+        {
+            var map = new DependenciesMap<PathBuildingTestClass>();
+            Assert.Throws<ArgumentException>(() => map.AddMap(dependentPropertyExpression, o => -1, o => o.IntProperty));
+        }
+
         private static void SupportedPathsTestImpl(Expression<Func<PathBuildingTestClass, object>> path, string[] expectedParseResult)
         {
             var map = new DependenciesMap<PathBuildingTestClass>();
