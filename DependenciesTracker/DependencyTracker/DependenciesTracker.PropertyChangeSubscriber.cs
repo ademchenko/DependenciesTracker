@@ -5,6 +5,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using JetBrains.Annotations;
 
@@ -61,11 +62,20 @@ namespace DependenciesTracker
 
             private void Subscribe([NotNull] INotifyPropertyChanged notifyPropertyChange)
             {
-                _observer = Observable.FromEventPattern<PropertyChangedEventHandler, PropertyChangedEventArgs>(
-                    h => notifyPropertyChange.PropertyChanged += h,
-                    h => notifyPropertyChange.PropertyChanged -= h)
-                    .Where(sa => sa.EventArgs.PropertyName == PathItem.PropertyOrFieldName)
-                    .Subscribe(_ => OnObservedPropertyChanged());
+                notifyPropertyChange.PropertyChanged += notifyPropertyChange_PropertyChanged;
+                _observer = Disposable.Create(() => notifyPropertyChange.PropertyChanged -= notifyPropertyChange_PropertyChanged);
+
+                //_observer = Observable.FromEventPattern<PropertyChangedEventHandler, PropertyChangedEventArgs>(
+                //    h => notifyPropertyChange.PropertyChanged += h,
+                //    h => notifyPropertyChange.PropertyChanged -= h)
+                //    .Where(sa => sa.EventArgs.PropertyName == PathItem.PropertyOrFieldName)
+                //    .Subscribe(_ => OnObservedPropertyChanged());
+            }
+
+            private void notifyPropertyChange_PropertyChanged(object sender, PropertyChangedEventArgs e)
+            {
+                if (e.PropertyName == PathItem.PropertyOrFieldName)
+                    OnObservedPropertyChanged();
             }
 
             private void OnObservedPropertyChanged()
