@@ -46,6 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DependenciesTrackerTests.cs" />
+    <Compile Include="DependentPropertyCalculationsTest.cs" />
     <Compile Include="PathBuildingTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Stubs\FlatOrder.cs" />
