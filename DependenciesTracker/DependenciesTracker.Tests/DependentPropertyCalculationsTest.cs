@@ -1,4 +1,5 @@
 using System;
+using System.Collections.ObjectModel;
 using System.ComponentModel;
 using JetBrains.Annotations;
 using Xunit;
@@ -53,6 +54,8 @@ namespace DependenciesTracker.Tests.PathBuilding
         private string _clientFullDescription;
         private ChildOrderItem _childItem;
         private int _childItemDoubledPrice;
+        private ObservableCollection<ChildOrderItem> _childItems;
+        private int _childItemsCollectionDoubledLength;
 
         public int Price
         {
@@ -150,6 +153,28 @@ namespace DependenciesTracker.Tests.PathBuilding
                 if (value == _childItemDoubledPrice) return;
                 _childItemDoubledPrice = value;
                 OnPropertyChanged("ChildItemDoubledPrice");
+            }
+        }
+
+        public ObservableCollection<ChildOrderItem> ChildItems
+        {
+            get { return _childItems; }
+            set
+            {
+                if (Equals(value, _childItems)) return;
+                _childItems = value;
+                OnPropertyChanged("ChildItems");
+            }
+        }
+
+        public int ChildItemsCollectionDoubledLength
+        {
+            get { return _childItemsCollectionDoubledLength; }
+            private set
+            {
+                if (value == _childItemsCollectionDoubledLength) return;
+                _childItemsCollectionDoubledLength = value;
+                OnPropertyChanged("ChildItemsCollectionDoubledLength");
             }
         }
 
@@ -283,8 +308,8 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void Init_SimpleRefTypePropertiesDependency_NullAndNotNullProperty()
         {
             var dependencyMap = new DependenciesMap<TestOrder>()
-                .AddMap(o => o.ClientFullDescription, o => string.Format("Client: {0} {1}", o.ClientFirstName, "undefined"),
-                                o => o.ClientFirstName, o => o.ClientLastName);
+                .AddMap(o => o.ClientFullDescription, o => string.Format("Client: {0} {1}", o.ClientFirstName,
+                    o.ClientLastName ?? "undefined"), o => o.ClientFirstName, o => o.ClientLastName);
 
             var firstName = Guid.NewGuid().ToString();
 
@@ -359,6 +384,38 @@ namespace DependenciesTracker.Tests.PathBuilding
 
             Assert.Equal(1, childItemDoubledPricePropertyChangeRaiseCount);
             Assert.Equal(2 * childItemPrice, order.ChildItemDoubledPrice);
+        }
+
+        [Fact]
+        public void Init_SimplePropertyChainDependency_CollectionLengthProperty()
+        {
+            var dependencyMap = new DependenciesMap<TestOrder>()
+                                    .AddMap(o => o.ChildItemsCollectionDoubledLength, o => o.ChildItems == null ? -1 : 2 * o.ChildItems.Count, o => o.ChildItems.Count);
+
+            var order = new TestOrder
+            {
+                ChildItems = new ObservableCollection<ChildOrderItem>
+                {
+                    //3 items
+                    new ChildOrderItem(), new ChildOrderItem(), new ChildOrderItem()
+                }
+            };
+
+            var childItemsDoubledLengthPropertyChangeRaiseCount = 0;
+
+            order.PropertyChanged += (_, args) =>
+            {
+                Assert.Equal("ChildItemsCollectionDoubledLength", args.PropertyName);
+                childItemsDoubledLengthPropertyChangeRaiseCount++;
+            };
+
+            Assert.Equal(0, order.ChildItemsCollectionDoubledLength);
+            Assert.Equal(0, childItemsDoubledLengthPropertyChangeRaiseCount);
+
+            dependencyMap.StartTracking(order);
+
+            Assert.Equal(1, childItemsDoubledLengthPropertyChangeRaiseCount);
+            Assert.Equal(2 * 3, order.ChildItemsCollectionDoubledLength);
         }
     }
 }

@@ -13,7 +13,8 @@ namespace DependenciesTracker
             throw new NotSupportedException("Call of this method is not supported");
         }
 
-        [NotNull] private static readonly MethodInfo _eachElementMethodInfo;
+        [NotNull]
+        private static readonly MethodInfo _eachElementMethodInfo;
 
         [NotNull]
         public static MethodInfo EachElementMethodInfo
@@ -24,7 +25,7 @@ namespace DependenciesTracker
         static CollectionExtensions()
         {
             Expression<Func<ICollection<object>, object>> anyElementExpression = c => c.EachElement();
-            _eachElementMethodInfo = ((MethodCallExpression) anyElementExpression.Body).Method.GetGenericMethodDefinition();
+            _eachElementMethodInfo = ((MethodCallExpression)anyElementExpression.Body).Method.GetGenericMethodDefinition();
         }
     }
 }

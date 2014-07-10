@@ -30,26 +30,31 @@ namespace DependenciesTracker
         }
 
         [NotNull]
-        public IDependenciesMap<T> AddMap<U>([NotNull] Action<T, U> setter, [NotNull] Func<T, U> calculator, [NotNull] params Expression<Func<T, object>>[] dependencyPaths)
+        public IDependenciesMap<T> AddMap<U>([NotNull] Action<T, U> setter, [NotNull] Func<T, U> calculator, Expression<Func<T, object>> obligatoryDependencyPath, [NotNull] params Expression<Func<T, object>>[] dependencyPaths)
         {
             if (setter == null)
                 throw new ArgumentNullException("setter");
             if (calculator == null)
                 throw new ArgumentNullException("calculator");
 
-            foreach (var builtPath in BuildPaths(dependencyPaths, o => setter(o, calculator(o))))
+
+
+            foreach (var builtPath in BuildPaths(dependencyPaths.StartWith(obligatoryDependencyPath), o => setter(o, calculator(o))))
                 _mapItems.Add(builtPath);
 
             return this;
         }
 
         [NotNull]
-        public IDependenciesMap<T> AddMap<U>([NotNull] Expression<Func<T, U>> dependentProperty, [NotNull] Func<T, U> calculator, [NotNull] params Expression<Func<T, object>>[] dependencyPaths)
+        public IDependenciesMap<T> AddMap<U>([NotNull] Expression<Func<T, U>> dependentProperty, [NotNull] Func<T, U> calculator,
+            [NotNull] Expression<Func<T, object>> obligatoryDependencyPath, [NotNull] params Expression<Func<T, object>>[] dependencyPaths)
         {
             if (dependentProperty == null)
                 throw new ArgumentNullException("dependentProperty");
+            if (obligatoryDependencyPath == null)
+                throw new ArgumentNullException("obligatoryDependencyPath");
 
-            return AddMap(BuildSetter(dependentProperty), calculator, dependencyPaths);
+            return AddMap(BuildSetter(dependentProperty), calculator, obligatoryDependencyPath, dependencyPaths);
         }
 
         [NotNull]
@@ -147,7 +152,7 @@ namespace DependenciesTracker
             var parameter = Expression.Parameter(typeof(object), "obj");
             var convertedParameter = Expression.Convert(parameter, parameterType);
             var propertyGetter = Expression.PropertyOrField(convertedParameter, propertyOrFieldName);
-            
+
             Debug.WriteLine(propertyGetter);
 
             var lambdaExpression = Expression.Lambda<Func<object, object>>(Expression.Convert(propertyGetter, typeof(object)), parameter);
