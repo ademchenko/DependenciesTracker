@@ -1,11 +1,16 @@
 using System;
+using System.CodeDom;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
+using DependenciesTracker.Tests.Stubs;
 using JetBrains.Annotations;
 using Xunit;
 
 namespace DependenciesTracker.Tests.PathBuilding
 {
+    //NOTE: All test class setters do not have a checking for an equality before an actual value setting to precisely record count of setting attempts
+
     public sealed class ChildOrderItem : INotifyPropertyChanged
     {
         private int _price;
@@ -16,7 +21,6 @@ namespace DependenciesTracker.Tests.PathBuilding
             get { return _price; }
             set
             {
-                if (value == _price) return;
                 _price = value;
                 OnPropertyChanged("Price");
             }
@@ -27,7 +31,6 @@ namespace DependenciesTracker.Tests.PathBuilding
             get { return _quantity; }
             set
             {
-                if (value == _quantity) return;
                 _quantity = value;
                 OnPropertyChanged("Quantity");
             }
@@ -62,7 +65,6 @@ namespace DependenciesTracker.Tests.PathBuilding
             get { return _price; }
             set
             {
-                if (value == _price) return;
                 _price = value;
                 OnPropertyChanged("Price");
             }
@@ -73,7 +75,6 @@ namespace DependenciesTracker.Tests.PathBuilding
             get { return _quantity; }
             set
             {
-                if (value == _quantity) return;
                 _quantity = value;
                 OnPropertyChanged("Quantity");
             }
@@ -84,7 +85,6 @@ namespace DependenciesTracker.Tests.PathBuilding
             get { return _cost; }
             private set
             {
-                if (value == _cost) return;
                 _cost = value;
                 OnPropertyChanged("Cost");
             }
@@ -95,7 +95,6 @@ namespace DependenciesTracker.Tests.PathBuilding
             get { return _clientFirstName; }
             set
             {
-                if (value == _clientFirstName) return;
                 _clientFirstName = value;
                 OnPropertyChanged("ClientFirstName");
             }
@@ -106,7 +105,6 @@ namespace DependenciesTracker.Tests.PathBuilding
             get { return _clientLastName; }
             set
             {
-                if (value == _clientLastName) return;
                 _clientLastName = value;
                 OnPropertyChanged("ClientLastName");
             }
@@ -117,7 +115,6 @@ namespace DependenciesTracker.Tests.PathBuilding
             get { return _clientShortDescription; }
             private set
             {
-                if (value == _clientShortDescription) return;
                 _clientShortDescription = value;
                 OnPropertyChanged("ClientShortDescription");
             }
@@ -128,7 +125,6 @@ namespace DependenciesTracker.Tests.PathBuilding
             get { return _clientFullDescription; }
             private set
             {
-                if (value == _clientFullDescription) return;
                 _clientFullDescription = value;
                 OnPropertyChanged("ClientFullDescription");
             }
@@ -139,7 +135,6 @@ namespace DependenciesTracker.Tests.PathBuilding
             get { return _childItem; }
             set
             {
-                if (Equals(value, _childItem)) return;
                 _childItem = value;
                 OnPropertyChanged("ChildItem");
             }
@@ -150,7 +145,6 @@ namespace DependenciesTracker.Tests.PathBuilding
             get { return _childItemDoubledPrice; }
             private set
             {
-                if (value == _childItemDoubledPrice) return;
                 _childItemDoubledPrice = value;
                 OnPropertyChanged("ChildItemDoubledPrice");
             }
@@ -161,7 +155,6 @@ namespace DependenciesTracker.Tests.PathBuilding
             get { return _childItems; }
             set
             {
-                if (Equals(value, _childItems)) return;
                 _childItems = value;
                 OnPropertyChanged("ChildItems");
             }
@@ -172,7 +165,6 @@ namespace DependenciesTracker.Tests.PathBuilding
             get { return _childItemsCollectionDoubledLength; }
             private set
             {
-                if (value == _childItemsCollectionDoubledLength) return;
                 _childItemsCollectionDoubledLength = value;
                 OnPropertyChanged("ChildItemsCollectionDoubledLength");
             }
@@ -185,6 +177,32 @@ namespace DependenciesTracker.Tests.PathBuilding
         {
             var handler = PropertyChanged;
             if (handler != null) handler(this, new PropertyChangedEventArgs(propertyName));
+        }
+    }
+
+    public sealed class TestOrderItemsCollection : ObservableCollection<ChildOrderItem>
+    {
+        private int _doubledItemsCount;
+        private int _totalCost;
+
+        public int DoubledItemsCount
+        {
+            get { return _doubledItemsCount; }
+            private set
+            {
+                _doubledItemsCount = value;
+                OnPropertyChanged(new PropertyChangedEventArgs("DoubledItemsCount"));
+            }
+        }
+
+        public int TotalCost
+        {
+            get { return _totalCost; }
+            private set
+            {
+                _totalCost = value;
+                OnPropertyChanged(new PropertyChangedEventArgs("TotalCost"));
+            }
         }
     }
 
@@ -300,12 +318,69 @@ namespace DependenciesTracker.Tests.PathBuilding
 
             dependencyMap.StartTracking(order);
 
+            Assert.Equal(2, costPropertyChangeRaiseCount);
+            Assert.Equal(price * quantity, order.Cost);
+        }
+
+
+        [Fact(Skip = "Issue #6 is created but not yet fixed. It's a low priority issue which doesn't affect the first release")]
+        public void Init_SimpleValueTypePropertiesDependency_Issue6()
+        {
+            var dependencyMap = new DependenciesMap<TestOrder>()
+                .AddMap(o => o.Cost, o => o.Price * o.Quantity, o => o.Quantity, o => o.Price);
+
+            var random = new Random();
+            var price = random.Next(1, 100);
+            var quantity = random.Next(100, 200);
+
+            var order = new TestOrder { Price = price, Quantity = quantity };
+
+            var costPropertyChangeRaiseCount = 0;
+
+            order.PropertyChanged += (_, args) =>
+            {
+                Assert.Equal("Cost", args.PropertyName);
+                costPropertyChangeRaiseCount++;
+            };
+
+            Assert.Equal(0, order.Cost);
+            Assert.Equal(0, costPropertyChangeRaiseCount);
+
+            dependencyMap.StartTracking(order);
+
             Assert.Equal(1, costPropertyChangeRaiseCount);
             Assert.Equal(price * quantity, order.Cost);
         }
 
         [Fact]
         public void Init_SimpleRefTypePropertiesDependency_NullAndNotNullProperty()
+        {
+            var dependencyMap = new DependenciesMap<TestOrder>()
+                .AddMap(o => o.ClientFullDescription, o => string.Format("Client: {0} {1}", o.ClientFirstName,
+                    o.ClientLastName ?? "undefined"), o => o.ClientFirstName, o => o.ClientLastName);
+
+            var firstName = Guid.NewGuid().ToString();
+
+            var order = new TestOrder { ClientFirstName = firstName, ClientLastName = null };
+
+            var clientFullDescriptionPropertyChangeRaiseCount = 0;
+            order.PropertyChanged += (_, args) =>
+            {
+                Assert.Equal("ClientFullDescription", args.PropertyName);
+                clientFullDescriptionPropertyChangeRaiseCount++;
+            };
+
+            Assert.Equal(null, order.ClientShortDescription);
+            Assert.Equal(0, clientFullDescriptionPropertyChangeRaiseCount);
+
+            dependencyMap.StartTracking(order);
+
+            Assert.Equal(2, clientFullDescriptionPropertyChangeRaiseCount);
+            Assert.Equal("Client: " + firstName + " undefined", order.ClientFullDescription);
+        }
+
+        [Fact(Skip = "Issue #6 is created but not yet fixed. It's a low priority issue which doesn't affect the first release")]
+        public void Init_SimpleRefTypePropertiesDependency_NullAndNotNullProperty_Issue6()
         {
             var dependencyMap = new DependenciesMap<TestOrder>()
                 .AddMap(o => o.ClientFullDescription, o => string.Format("Client: {0} {1}", o.ClientFirstName,
@@ -382,8 +457,8 @@ namespace DependenciesTracker.Tests.PathBuilding
 
             dependencyMap.StartTracking(order);
 
-            Assert.Equal(1, childItemDoubledPricePropertyChangeRaiseCount);
             Assert.Equal(2 * childItemPrice, order.ChildItemDoubledPrice);
+            Assert.Equal(1, childItemDoubledPricePropertyChangeRaiseCount);
         }
 
         [Fact]
@@ -414,8 +489,166 @@ namespace DependenciesTracker.Tests.PathBuilding
 
             dependencyMap.StartTracking(order);
 
-            Assert.Equal(1, childItemsDoubledLengthPropertyChangeRaiseCount);
             Assert.Equal(2 * 3, order.ChildItemsCollectionDoubledLength);
+            Assert.Equal(1, childItemsDoubledLengthPropertyChangeRaiseCount);
+        }
+
+        [Fact]
+        public void Init_CollectionProperty_EachElementAtTheEnd()
+        {
+            var dependencyMap = new DependenciesMap<TestOrder>()
+                                .AddMap(o => o.ChildItemsCollectionDoubledLength, o => o.ChildItems == null ? -1 : 2 * o.ChildItems.Count,
+                                            o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems));
+
+            var order = new TestOrder
+            {
+                ChildItems = new ObservableCollection<ChildOrderItem>
+                {
+                    //3 items
+                    new ChildOrderItem(), new ChildOrderItem(), new ChildOrderItem()
+                }
+            };
+
+            var childItemsDoubledLengthPropertyChangeRaiseCount = 0;
+
+            order.PropertyChanged += (_, args) =>
+            {
+                Assert.Equal("ChildItemsCollectionDoubledLength", args.PropertyName);
+                childItemsDoubledLengthPropertyChangeRaiseCount++;
+            };
+
+            Assert.Equal(0, order.ChildItemsCollectionDoubledLength);
+            Assert.Equal(0, childItemsDoubledLengthPropertyChangeRaiseCount);
+
+            dependencyMap.StartTracking(order);
+
+            Assert.Equal(2 * 3, order.ChildItemsCollectionDoubledLength);
+            Assert.Equal(1, childItemsDoubledLengthPropertyChangeRaiseCount);
+        }
+
+
+        [Fact]
+        public void Init_CollectionAsARoot_EachElementAtTheEnd()
+        {
+            var dependencyMap = new DependenciesMap<TestOrderItemsCollection>()
+                                .AddMap(o => o.DoubledItemsCount, o => 2 * o.Count,
+                                            o => DependenciesTracker.CollectionExtensions.EachElement(o));
+
+            var orderItems = new TestOrderItemsCollection
+            {
+                //3 items
+                new ChildOrderItem(),
+                new ChildOrderItem(),
+                new ChildOrderItem()
+            };
+
+            var childItemsDoubledItemsCountPropertyChangeRaiseCount = 0;
+
+            ((INotifyPropertyChanged)orderItems).PropertyChanged += (_, args) =>
+            {
+                Assert.Equal("DoubledItemsCount", args.PropertyName);
+                childItemsDoubledItemsCountPropertyChangeRaiseCount++;
+            };
+
+            Assert.Equal(0, orderItems.DoubledItemsCount);
+            Assert.Equal(0, childItemsDoubledItemsCountPropertyChangeRaiseCount);
+
+            dependencyMap.StartTracking(orderItems);
+
+            Assert.Equal(2 * 3, orderItems.DoubledItemsCount);
+            Assert.Equal(1, childItemsDoubledItemsCountPropertyChangeRaiseCount);
+        }
+
+        [Fact]
+        public void Init_CollectionAsARoot_EachElement_ValTypeProperty()
+        {
+            var dependencyMap = new DependenciesMap<TestOrderItemsCollection>()
+                                .AddMap(o => o.TotalCost, o => o.Sum(i => i.Price * i.Quantity),
+                                            o => DependenciesTracker.CollectionExtensions.EachElement(o).Quantity,
+                                            o => DependenciesTracker.CollectionExtensions.EachElement(o).Quantity);
+
+            var random = new Random();
+
+            var orderItem1Price = random.Next(0, 10);
+            var orderItem1Quantity = random.Next(0, 10);
+            var orderItem2Price = random.Next(0, 10);
+            var orderItem2Quantity = random.Next(0, 10);
+            var orderItem3Price = random.Next(0, 10);
+            var orderItem3Quantity = random.Next(0, 10);
+
+            var expectedTotalCost = orderItem1Price * orderItem1Quantity + orderItem2Price * orderItem2Quantity +
+                                    orderItem3Price * orderItem3Quantity;
+
+
+            var orderItems = new TestOrderItemsCollection
+            {
+                //3 items
+                new ChildOrderItem {Price = orderItem1Price, Quantity = orderItem1Quantity},
+                new ChildOrderItem {Price = orderItem2Price, Quantity = orderItem2Quantity},
+                new ChildOrderItem {Price = orderItem3Price, Quantity = orderItem3Quantity}
+            };
+
+            var totalCostPropertyChangeRaiseCount = 0;
+
+            ((INotifyPropertyChanged)orderItems).PropertyChanged += (_, args) =>
+            {
+                Assert.Equal("TotalCost", args.PropertyName);
+                totalCostPropertyChangeRaiseCount++;
+            };
+
+            Assert.Equal(0, orderItems.TotalCost);
+            Assert.Equal(0, totalCostPropertyChangeRaiseCount);
+
+            dependencyMap.StartTracking(orderItems);
+
+            Assert.Equal(expectedTotalCost, orderItems.TotalCost);
+            Assert.Equal(2, totalCostPropertyChangeRaiseCount);
+        }
+
+        [Fact(Skip = "Issue #6 is created but not yet fixed. It's a low priority issue which doesn't affect the first release")]
+        public void Init_CollectionAsARoot_EachElement_ValTypeProperty_Issue6()
+        {
+            var dependencyMap = new DependenciesMap<TestOrderItemsCollection>()
+                                .AddMap(o => o.TotalCost, o => o.Sum(i => i.Price * i.Quantity),
+                                            o => DependenciesTracker.CollectionExtensions.EachElement(o).Quantity,
+                                            o => DependenciesTracker.CollectionExtensions.EachElement(o).Quantity);
+
+            var random = new Random();
+
+            var orderItem1Price = random.Next(0, 10);
+            var orderItem1Quantity = random.Next(0, 10);
+            var orderItem2Price = random.Next(0, 10);
+            var orderItem2Quantity = random.Next(0, 10);
+            var orderItem3Price = random.Next(0, 10);
+            var orderItem3Quantity = random.Next(0, 10);
+
+            var expectedTotalCost = orderItem1Price * orderItem1Quantity + orderItem2Price * orderItem2Quantity +
+                                    orderItem3Price * orderItem3Quantity;
+
+
+            var orderItems = new TestOrderItemsCollection
+            {
+                //3 items
+                new ChildOrderItem {Price = orderItem1Price, Quantity = orderItem1Quantity},
+                new ChildOrderItem {Price = orderItem2Price, Quantity = orderItem2Quantity},
+                new ChildOrderItem {Price = orderItem3Price, Quantity = orderItem3Quantity}
+            };
+
+            var totalCostPropertyChangeRaiseCount = 0;
+
+            ((INotifyPropertyChanged)orderItems).PropertyChanged += (_, args) =>
+            {
+                Assert.Equal("TotalCost", args.PropertyName);
+                totalCostPropertyChangeRaiseCount++;
+            };
+
+            Assert.Equal(0, orderItems.TotalCost);
+            Assert.Equal(0, totalCostPropertyChangeRaiseCount);
+
+            dependencyMap.StartTracking(orderItems);
+
+            Assert.Equal(expectedTotalCost, orderItems.TotalCost);
+            Assert.Equal(1, totalCostPropertyChangeRaiseCount);
         }
     }
 }

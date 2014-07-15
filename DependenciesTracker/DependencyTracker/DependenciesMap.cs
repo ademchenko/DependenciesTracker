@@ -38,7 +38,6 @@ namespace DependenciesTracker
                 throw new ArgumentNullException("calculator");
 
 
-
             foreach (var builtPath in BuildPaths(dependencyPaths.StartWith(obligatoryDependencyPath), o => setter(o, calculator(o))))
                 _mapItems.Add(builtPath);
 
