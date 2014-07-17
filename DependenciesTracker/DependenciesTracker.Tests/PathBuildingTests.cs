@@ -194,6 +194,16 @@ namespace DependenciesTracker.Tests.PathBuilding
                 map.AddMap(o => o.DependentProperty, o => -1, path));
         }
 
+        [Fact(Skip = "Issue #7 is created. It's a low priority issue and won't be fixed in Release 1.")]
+        public void AddDependency_MoreThanOneDependencyOnAProperty_NotSupported()
+        {
+            var map = new DependenciesMap<PathBuildingTestClass>();
+            Assert.Throws<InvalidOperationException>(() => 
+                map.AddMap(o => o.DependentProperty, o => -1, o => o.IntProperty)
+                   .AddMap(o => o.DependentProperty, o => -2, o => o.StringProperty)
+                );
+        }
+
         public static IEnumerable<object[]> AddDependency_ConvertToObject_AllowedAtTheEndOfPath_TestData
         {
             get
