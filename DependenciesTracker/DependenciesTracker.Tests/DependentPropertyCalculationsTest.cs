@@ -1,10 +1,7 @@
 using System;
-using System.CodeDom;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
-using System.Runtime.InteropServices;
-using DependenciesTracker.Tests.Stubs;
 using JetBrains.Annotations;
 using Xunit;
 
