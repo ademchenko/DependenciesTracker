@@ -58,6 +58,11 @@ namespace DependenciesTracker.Tests.PathBuilding
         private ObservableCollection<ChildOrderItem> _childItems;
         private int _childItemsCollectionDoubledLength;
         private decimal _costWithDiscount;
+        private int _childItemsTotalCost;
+        private int _unalignedIntMatrixElementsTotalSum;
+        private int _unalignedIntMatrixMaxRowLength;
+        private ObservableCollection<ObservableCollection<string>> _unalignedStringMatrix;
+        private string _maxLengthStringInUnalignedStringMatrix;
 
         public int Price
         {
@@ -170,6 +175,16 @@ namespace DependenciesTracker.Tests.PathBuilding
             }
         }
 
+        public int ChildItemsTotalCost
+        {
+            get { return _childItemsTotalCost; }
+            set
+            {
+                _childItemsTotalCost = value;
+                OnPropertyChanged("ChildItemsTotalCost");
+            }
+        }
+
         public int ChildItemsCollectionDoubledLength
         {
             get { return _childItemsCollectionDoubledLength; }
@@ -177,6 +192,48 @@ namespace DependenciesTracker.Tests.PathBuilding
             {
                 _childItemsCollectionDoubledLength = value;
                 OnPropertyChanged("ChildItemsCollectionDoubledLength");
+            }
+        }
+
+        public ObservableCollection<ObservableCollection<int>> UnalignedIntMatrix { get; set; }
+
+        public int UnalignedIntMatrixElementsTotalSum
+        {
+            get { return _unalignedIntMatrixElementsTotalSum; }
+            private set
+            {
+                _unalignedIntMatrixElementsTotalSum = value;
+                OnPropertyChanged("UnalignedIntMatrixElementsTotalSum");
+            }
+        }
+
+        public int UnalignedIntMatrixMaxRowLength
+        {
+            get { return _unalignedIntMatrixMaxRowLength; }
+            private set
+            {
+                _unalignedIntMatrixMaxRowLength = value;
+                OnPropertyChanged("UnalignedIntMatrixMaxRowLength");
+            }
+        }
+
+        public ObservableCollection<ObservableCollection<string>> UnalignedStringMatrix
+        {
+            get { return _unalignedStringMatrix; }
+            set
+            {
+                _unalignedStringMatrix = value;
+                OnPropertyChanged("UnalignedStringMatrix");
+            }
+        }
+
+        public string MaxLengthStringInUnalignedStringMatrix
+        {
+            get { return _maxLengthStringInUnalignedStringMatrix; }
+            set
+            {
+                _maxLengthStringInUnalignedStringMatrix = value;
+                OnPropertyChanged("MaxLengthStringInUnalignedStringMatrix");
             }
         }
 
@@ -251,7 +308,8 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void Init_SimpleRefTypeNotNullPropertyDependency()
         {
             var dependencyMap = new DependenciesMap<TestOrder>()
-                .AddMap(o => o.ClientShortDescription, o => string.Format("Client: {0}", o.ClientFirstName), o => o.ClientFirstName);
+                .AddMap(o => o.ClientShortDescription, o => string.Format("Client: {0}", o.ClientFirstName),
+                    o => o.ClientFirstName);
 
             var firstName = Guid.NewGuid().ToString();
             var lastName = Guid.NewGuid().ToString();
@@ -333,7 +391,10 @@ namespace DependenciesTracker.Tests.PathBuilding
         }
 
 
-        [Fact(Skip = "Issue #6 is created but not yet fixed. It's a low priority issue which doesn't affect the first release")]
+        [Fact(
+            Skip =
+                "Issue #6 is created but not yet fixed. It's a low priority issue which doesn't affect the first release"
+            )]
         public void Init_SimpleValueTypePropertiesDependency_Issue6()
         {
             var dependencyMap = new DependenciesMap<TestOrder>()
@@ -389,7 +450,10 @@ namespace DependenciesTracker.Tests.PathBuilding
             Assert.Equal("Client: " + firstName + " undefined", order.ClientFullDescription);
         }
 
-        [Fact(Skip = "Issue #6 is created but not yet fixed. It's a low priority issue which doesn't affect the first release")]
+        [Fact(
+            Skip =
+                "Issue #6 is created but not yet fixed. It's a low priority issue which doesn't affect the first release"
+            )]
         public void Init_SimpleRefTypePropertiesDependency_NullAndNotNullProperty_Issue6()
         {
             var dependencyMap = new DependenciesMap<TestOrder>()
@@ -420,8 +484,8 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void Init_SimplePropertyChainDependency_NullPropertyValueInTheMiddleOfChain()
         {
             var dependencyMap = new DependenciesMap<TestOrder>()
-                                    .AddMap(o => o.ChildItemDoubledPrice,
-                                        o => o.ChildItem == null ? -1 : 2 * o.ChildItem.Price, o => o.ChildItem.Price);
+                .AddMap(o => o.ChildItemDoubledPrice,
+                    o => o.ChildItem == null ? -1 : 2 * o.ChildItem.Price, o => o.ChildItem.Price);
 
             var order = new TestOrder();
 
@@ -446,8 +510,8 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void Init_SimplePropertyChainDependency_NotNullPropertyChain()
         {
             var dependencyMap = new DependenciesMap<TestOrder>()
-                                    .AddMap(o => o.ChildItemDoubledPrice,
-                                        o => o.ChildItem == null ? -1 : 2 * o.ChildItem.Price, o => o.ChildItem.Price);
+                .AddMap(o => o.ChildItemDoubledPrice,
+                    o => o.ChildItem == null ? -1 : 2 * o.ChildItem.Price, o => o.ChildItem.Price);
 
             var random = new Random();
             var childItemPrice = random.Next(1, 100);
@@ -475,14 +539,17 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void Init_SimplePropertyChainDependency_CollectionLengthProperty()
         {
             var dependencyMap = new DependenciesMap<TestOrder>()
-                                    .AddMap(o => o.ChildItemsCollectionDoubledLength, o => o.ChildItems == null ? -1 : 2 * o.ChildItems.Count, o => o.ChildItems.Count);
+                .AddMap(o => o.ChildItemsCollectionDoubledLength, o => o.ChildItems == null ? -1 : 2 * o.ChildItems.Count,
+                    o => o.ChildItems.Count);
 
             var order = new TestOrder
             {
                 ChildItems = new ObservableCollection<ChildOrderItem>
                 {
                     //3 items
-                    new ChildOrderItem(), new ChildOrderItem(), new ChildOrderItem()
+                    new ChildOrderItem(),
+                    new ChildOrderItem(),
+                    new ChildOrderItem()
                 }
             };
 
@@ -504,18 +571,20 @@ namespace DependenciesTracker.Tests.PathBuilding
         }
 
         [Fact]
-        public void Init_CollectionProperty_EachElementAtTheEnd()
+        public void Init_CollectionAsAProperty_EachElementAtTheEnd()
         {
             var dependencyMap = new DependenciesMap<TestOrder>()
-                                .AddMap(o => o.ChildItemsCollectionDoubledLength, o => o.ChildItems == null ? -1 : 2 * o.ChildItems.Count,
-                                            o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems));
+                .AddMap(o => o.ChildItemsCollectionDoubledLength, o => o.ChildItems == null ? -1 : 2 * o.ChildItems.Count,
+                    o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems));
 
             var order = new TestOrder
             {
                 ChildItems = new ObservableCollection<ChildOrderItem>
                 {
                     //3 items
-                    new ChildOrderItem(), new ChildOrderItem(), new ChildOrderItem()
+                    new ChildOrderItem(),
+                    new ChildOrderItem(),
+                    new ChildOrderItem()
                 }
             };
 
@@ -541,8 +610,8 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void Init_CollectionAsARoot_EachElementAtTheEnd()
         {
             var dependencyMap = new DependenciesMap<TestOrderItemsCollection>()
-                                .AddMap(o => o.DoubledItemsCount, o => 2 * o.Count,
-                                            o => DependenciesTracker.CollectionExtensions.EachElement(o));
+                .AddMap(o => o.DoubledItemsCount, o => 2 * o.Count,
+                    o => DependenciesTracker.CollectionExtensions.EachElement(o));
 
             var orderItems = new TestOrderItemsCollection
             {
@@ -573,9 +642,9 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void Init_CollectionAsARoot_EachElement_ValTypeProperty()
         {
             var dependencyMap = new DependenciesMap<TestOrderItemsCollection>()
-                                .AddMap(o => o.TotalCost, o => o.Sum(i => i.Price * i.Quantity),
-                                            o => DependenciesTracker.CollectionExtensions.EachElement(o).Quantity,
-                                            o => DependenciesTracker.CollectionExtensions.EachElement(o).Quantity);
+                .AddMap(o => o.TotalCost, o => o.Sum(i => i.Price * i.Quantity),
+                    o => DependenciesTracker.CollectionExtensions.EachElement(o).Quantity,
+                    o => DependenciesTracker.CollectionExtensions.EachElement(o).Quantity);
 
             var random = new Random();
 
@@ -615,13 +684,16 @@ namespace DependenciesTracker.Tests.PathBuilding
             Assert.Equal(2, totalCostPropertyChangeRaiseCount);
         }
 
-        [Fact(Skip = "Issue #6 is created but not yet fixed. It's a low priority issue which doesn't affect the first release")]
+        [Fact(
+            Skip =
+                "Issue #6 is created but not yet fixed. It's a low priority issue which doesn't affect the first release"
+            )]
         public void Init_CollectionAsARoot_EachElement_ValTypeProperty_Issue6()
         {
             var dependencyMap = new DependenciesMap<TestOrderItemsCollection>()
-                                .AddMap(o => o.TotalCost, o => o.Sum(i => i.Price * i.Quantity),
-                                            o => DependenciesTracker.CollectionExtensions.EachElement(o).Quantity,
-                                            o => DependenciesTracker.CollectionExtensions.EachElement(o).Quantity);
+                .AddMap(o => o.TotalCost, o => o.Sum(i => i.Price * i.Quantity),
+                    o => DependenciesTracker.CollectionExtensions.EachElement(o).Quantity,
+                    o => DependenciesTracker.CollectionExtensions.EachElement(o).Quantity);
 
             var random = new Random();
 
@@ -659,6 +731,206 @@ namespace DependenciesTracker.Tests.PathBuilding
 
             Assert.Equal(expectedTotalCost, orderItems.TotalCost);
             Assert.Equal(1, totalCostPropertyChangeRaiseCount);
+        }
+
+		[Fact]
+        public void Init_CollectionAsAProperty_EachElement_ValTypeProperty()
+        {
+            var dependencyMap = new DependenciesMap<TestOrder>()
+                .AddMap(o => o.ChildItemsTotalCost, o => o.ChildItems.Sum(i => i.Price * i.Quantity)
+                                                         + (o.ChildItem == null ? 0 : o.ChildItem.Price * o.ChildItem.Quantity),
+                    o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Price,
+                    o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Quantity,
+                    o => o.ChildItem);
+
+            var random = new Random();
+
+            var childItemPrice = random.Next(0, 10);
+            var childItemQuantity = random.Next(0, 10);
+            var childItem1Price = random.Next(0, 10);
+            var childItem1Quantity = random.Next(0, 10);
+            var childItem2Price = random.Next(0, 10);
+            var childItem2Quantity = random.Next(0, 10);
+            var childItem3Price = random.Next(0, 10);
+            var child3Quantity = random.Next(0, 10);
+
+            var expectedChildItemsTotalCost = childItemPrice * childItemQuantity + childItem1Price * childItem1Quantity +
+                                              childItem2Price * childItem2Quantity + childItem3Price * child3Quantity;
+
+            var order = new TestOrder
+            {
+                ChildItem = new ChildOrderItem { Price = childItemPrice, Quantity = childItemQuantity },
+                ChildItems = new ObservableCollection<ChildOrderItem>
+                {
+                    //3 items
+                    new ChildOrderItem {Price = childItem1Price, Quantity = childItem1Quantity},
+                    new ChildOrderItem {Price = childItem2Price, Quantity = childItem2Quantity},
+                    new ChildOrderItem {Price = childItem3Price, Quantity = child3Quantity}
+                }
+            };
+
+            var childItemsTotalCostPropertyChangeRaiseCount = 0;
+
+            order.PropertyChanged += (_, args) =>
+            {
+                Assert.Equal("ChildItemsTotalCost", args.PropertyName);
+                childItemsTotalCostPropertyChangeRaiseCount++;
+            };
+
+            Assert.Equal(0, order.ChildItemsTotalCost);
+            Assert.Equal(0, childItemsTotalCostPropertyChangeRaiseCount);
+
+            dependencyMap.StartTracking(order);
+
+            Assert.Equal(expectedChildItemsTotalCost, order.ChildItemsTotalCost);
+            Assert.Equal(3, childItemsTotalCostPropertyChangeRaiseCount);
+        }
+
+        [Fact(Skip ="Issue #6 is created but not yet fixed. It's a low priority issue which doesn't affect the first release")]
+        public void Init_CollectionAsAProperty_EachElement_ValTypeProperty_Issue6()
+        {
+            var dependencyMap = new DependenciesMap<TestOrder>()
+                .AddMap(o => o.ChildItemsTotalCost, o => o.ChildItems.Sum(i => i.Price * i.Quantity)
+                                                         +
+                                                         (o.ChildItem == null
+                                                             ? 0
+                                                             : o.ChildItem.Price * o.ChildItem.Quantity),
+                    o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Price,
+                    o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Quantity,
+                    o => o.ChildItem);
+
+            var random = new Random();
+
+            var childItemPrice = random.Next(0, 10);
+            var childItemQuantity = random.Next(0, 10);
+            var childItem1Price = random.Next(0, 10);
+            var childItem1Quantity = random.Next(0, 10);
+            var childItem2Price = random.Next(0, 10);
+            var childItem2Quantity = random.Next(0, 10);
+            var childItem3Price = random.Next(0, 10);
+            var child3Quantity = random.Next(0, 10);
+
+            var expectedChildItemsTotalCost = childItemPrice * childItemQuantity + childItem1Price * childItem1Quantity +
+                                              childItem2Price * childItem2Quantity + childItem3Price * child3Quantity;
+
+            var order = new TestOrder
+            {
+                ChildItem = new ChildOrderItem { Price = childItemPrice, Quantity = childItemQuantity },
+                ChildItems = new ObservableCollection<ChildOrderItem>
+                {
+                    //3 items
+                    new ChildOrderItem {Price = childItem1Price, Quantity = childItem1Quantity},
+                    new ChildOrderItem {Price = childItem2Price, Quantity = childItem2Quantity},
+                    new ChildOrderItem {Price = childItem3Price, Quantity = child3Quantity}
+                }
+            };
+
+            var childItemsTotalCostPropertyChangeRaiseCount = 0;
+
+            order.PropertyChanged += (_, args) =>
+            {
+                Assert.Equal("ChildItemsTotalCost", args.PropertyName);
+                childItemsTotalCostPropertyChangeRaiseCount++;
+            };
+
+            Assert.Equal(0, order.ChildItemsTotalCost);
+            Assert.Equal(0, childItemsTotalCostPropertyChangeRaiseCount);
+
+            dependencyMap.StartTracking(order);
+
+            Assert.Equal(expectedChildItemsTotalCost, order.ChildItemsTotalCost);
+            Assert.Equal(3, childItemsTotalCostPropertyChangeRaiseCount);
+        }
+
+        [Fact]
+        public void CollectionAsAProperty_EachElement_EachElement()
+        {
+            var dependencyMap = new DependenciesMap<TestOrder>()
+                .AddMap(o => o.UnalignedIntMatrixElementsTotalSum, o => o.UnalignedIntMatrix.Sum(i => i.Sum()),
+                    o => DependenciesTracker.CollectionExtensions.EachElement(
+                        DependenciesTracker.CollectionExtensions.EachElement(o.UnalignedIntMatrix)));
+
+            var unalignedIntMatrixElementsTotalSumPropertyChangeRaiseCount = 0;
+
+            var random = new Random();
+
+            var item00 = random.Next(0, 10);
+            var item01 = random.Next(0, 10);
+            var item10 = random.Next(0, 10);
+            var item11 = random.Next(0, 10);
+            var item12 = random.Next(0, 10);
+            var item20 = random.Next(0, 10);
+
+            var expectedSum = item00 + item01 + item10 + item11 + item12 + item20;
+
+            var order = new TestOrder
+            {
+                UnalignedIntMatrix = new ObservableCollection<ObservableCollection<int>>
+                {
+                    new ObservableCollection<int> { item00, item01 },
+                    new ObservableCollection<int> {item10, item11, item12},
+                    new ObservableCollection<int> {item20}
+                }
+            };
+
+            order.PropertyChanged += (_, args) =>
+            {
+                Assert.Equal("UnalignedIntMatrixElementsTotalSum", args.PropertyName);
+                unalignedIntMatrixElementsTotalSumPropertyChangeRaiseCount++;
+            };
+
+            Assert.Equal(0, order.UnalignedIntMatrixElementsTotalSum);
+            Assert.Equal(0, unalignedIntMatrixElementsTotalSumPropertyChangeRaiseCount);
+
+            dependencyMap.StartTracking(order);
+
+            Assert.Equal(expectedSum, order.UnalignedIntMatrixElementsTotalSum);
+            Assert.Equal(1, unalignedIntMatrixElementsTotalSumPropertyChangeRaiseCount);
+        }
+
+        [Fact]
+        public void CollectionAsAProperty_EachElement_EachElement_ValTypeProperty()
+        {
+            var dependencyMap = new DependenciesMap<TestOrder>()
+                .AddMap(o => o.MaxLengthStringInUnalignedStringMatrix,
+                        o => o.UnalignedStringMatrix.SelectMany(c => c).Single(i => i.Length == o.UnalignedStringMatrix.SelectMany(item => item).Max(item => item.Length)),
+                        o => DependenciesTracker.CollectionExtensions.EachElement(
+                                    DependenciesTracker.CollectionExtensions.EachElement(o.UnalignedIntMatrix)));
+
+            var maxLengthStringInUnalignedStringMatrixPropertyChangeRaiseCount = 0;
+
+            var random = new Random();
+
+            var item00 = Guid.NewGuid().ToString().Substring(0, random.Next(0, 10));
+            var item01 = Guid.NewGuid().ToString().Substring(0, random.Next(0, 10));
+            var item10 = Guid.NewGuid().ToString().Substring(0, random.Next(0, 10));
+            var item11 = Guid.NewGuid().ToString().Substring(0, random.Next(10, 20));
+            var item12 = Guid.NewGuid().ToString().Substring(0, random.Next(0, 10));
+            var item20 = Guid.NewGuid().ToString().Substring(0, random.Next(0, 10));
+
+            var order = new TestOrder
+            {
+                UnalignedStringMatrix = new ObservableCollection<ObservableCollection<string>>
+                {
+                    new ObservableCollection<string> { item00, item01 },
+                    new ObservableCollection<string> {item10, item11, item12},
+                    new ObservableCollection<string> {item20}
+                }
+            };
+
+            order.PropertyChanged += (_, args) =>
+            {
+                Assert.Equal("MaxLengthStringInUnalignedStringMatrix", args.PropertyName);
+                maxLengthStringInUnalignedStringMatrixPropertyChangeRaiseCount++;
+            };
+
+            Assert.Equal(null, order.MaxLengthStringInUnalignedStringMatrix);
+            Assert.Equal(0, maxLengthStringInUnalignedStringMatrixPropertyChangeRaiseCount);
+
+            dependencyMap.StartTracking(order);
+
+            Assert.Equal(item11, order.MaxLengthStringInUnalignedStringMatrix);
+            Assert.Equal(1, maxLengthStringInUnalignedStringMatrixPropertyChangeRaiseCount);
         }
 
         [Fact]
@@ -773,5 +1045,6 @@ namespace DependenciesTracker.Tests.PathBuilding
             Assert.Equal(expectedCostWithDiscount, order.CostWithDiscount);
             Assert.Equal(1, costWithDiscountPropertyChangeRaiseCount);
         }
+		
     }
 }
