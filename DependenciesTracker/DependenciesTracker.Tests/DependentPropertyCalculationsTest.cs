@@ -3,6 +3,7 @@ using System.CodeDom;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
+using System.Runtime.InteropServices;
 using DependenciesTracker.Tests.Stubs;
 using JetBrains.Annotations;
 using Xunit;
@@ -59,6 +60,7 @@ namespace DependenciesTracker.Tests.PathBuilding
         private int _childItemDoubledPrice;
         private ObservableCollection<ChildOrderItem> _childItems;
         private int _childItemsCollectionDoubledLength;
+        private decimal _costWithDiscount;
 
         public int Price
         {
@@ -89,6 +91,17 @@ namespace DependenciesTracker.Tests.PathBuilding
                 OnPropertyChanged("Cost");
             }
         }
+
+        public decimal CostWithDiscount
+        {
+            get { return _costWithDiscount; }
+            private set
+            {
+                _costWithDiscount = value;
+                OnPropertyChanged("CostWithDiscount");
+            }
+        }
+
 
         public string ClientFirstName
         {
@@ -649,6 +662,119 @@ namespace DependenciesTracker.Tests.PathBuilding
 
             Assert.Equal(expectedTotalCost, orderItems.TotalCost);
             Assert.Equal(1, totalCostPropertyChangeRaiseCount);
+        }
+
+        [Fact]
+        public void Init_DependentOfDependentPropertyIsBeingCalculatedOnSourcePropertyChange()
+        {
+            //if we add dependencies in direct order, i.e. source dependent property then dependent of that 
+            //dependent property, we observe only a single assignment of the second property which is correct.
+            //But reverse order of adding maps shows several initialization assignments of the second property which is wrong
+            //and is kind of issue#6 observation. See the Init_DependentOfDependentPropertyIsBeingCalculatedOnSourcePropertyChange_ReverseOrderOfAddingMaps test.
+            var dependencyMap = new DependenciesMap<TestOrder>()
+                                    .AddMap(o => o.Cost, o => o.Price * o.Quantity, o => o.Price, o => o.Quantity)
+                                    .AddMap(o => o.CostWithDiscount, o => 0.9m * o.Cost, o => o.Cost);
+
+            var random = new Random();
+
+            var price = random.Next(1, 10);
+            var quantity = random.Next(1, 10);
+
+            var expectedCostWithDiscount = 0.9m * price * quantity;
+
+            var order = new TestOrder();
+
+            var costWithDiscountPropertyChangeRaiseCount = 0;
+
+            order.PropertyChanged += (_, args) =>
+            {
+                if (args.PropertyName == "CostWithDiscount")
+                    costWithDiscountPropertyChangeRaiseCount++;
+            };
+
+            Assert.Equal(0, order.CostWithDiscount);
+            Assert.Equal(0, costWithDiscountPropertyChangeRaiseCount);
+
+            order.Price = price;
+            order.Quantity = quantity;
+
+            dependencyMap.StartTracking(order);
+
+            Assert.Equal(expectedCostWithDiscount, order.CostWithDiscount);
+            Assert.Equal(1, costWithDiscountPropertyChangeRaiseCount);
+        }
+
+        [Fact]
+        public void Init_DependentOfDependentPropertyIsBeingCalculatedOnSourcePropertyChange_ReverseOrderOfAddingMaps()
+        {
+            var dependencyMap = new DependenciesMap<TestOrder>()
+                                    .AddMap(o => o.CostWithDiscount, o => 0.9m * o.Cost, o => o.Cost)
+                                    .AddMap(o => o.Cost, o => o.Price * o.Quantity, o => o.Price, o => o.Quantity);
+
+            var random = new Random();
+
+            var price = random.Next(1, 10);
+            var quantity = random.Next(1, 10);
+
+            var expectedCostWithDiscount = 0.9m * price * quantity;
+
+            var order = new TestOrder();
+
+            var costWithDiscountPropertyChangeRaiseCount = 0;
+
+            order.PropertyChanged += (_, args) =>
+            {
+                if (args.PropertyName == "CostWithDiscount")
+                    costWithDiscountPropertyChangeRaiseCount++;
+            };
+
+            Assert.Equal(0, order.CostWithDiscount);
+            Assert.Equal(0, costWithDiscountPropertyChangeRaiseCount);
+
+            order.Price = price;
+            order.Quantity = quantity;
+
+            dependencyMap.StartTracking(order);
+
+            Assert.Equal(expectedCostWithDiscount, order.CostWithDiscount);
+            Assert.Equal(3, costWithDiscountPropertyChangeRaiseCount);
+        }
+
+        //[Fact]
+        [Fact(Skip = "Issue #6 is created but not yet fixed. It's a low priority issue which doesn't affect the first release")]
+        public void Init_DependentOfDependentPropertyIsBeingCalculatedOnSourcePropertyChange_ReverseOrderOfAddingMaps_Issue6()
+        {
+            var dependencyMap = new DependenciesMap<TestOrder>()
+                                    .AddMap(o => o.CostWithDiscount, o => 0.9m * o.Cost, o => o.Cost)
+                                    .AddMap(o => o.Cost, o => o.Price * o.Quantity, o => o.Price, o => o.Quantity);
+
+            var random = new Random();
+
+            var price = random.Next(1, 10);
+            var quantity = random.Next(1, 10);
+
+            var expectedCostWithDiscount = 0.9m * price * quantity;
+
+            var order = new TestOrder();
+
+            var costWithDiscountPropertyChangeRaiseCount = 0;
+
+            order.PropertyChanged += (_, args) =>
+            {
+                if (args.PropertyName == "CostWithDiscount")
+                    costWithDiscountPropertyChangeRaiseCount++;
+            };
+
+            Assert.Equal(0, order.CostWithDiscount);
+            Assert.Equal(0, costWithDiscountPropertyChangeRaiseCount);
+
+            order.Price = price;
+            order.Quantity = quantity;
+
+            dependencyMap.StartTracking(order);
+
+            Assert.Equal(expectedCostWithDiscount, order.CostWithDiscount);
+            Assert.Equal(1, costWithDiscountPropertyChangeRaiseCount);
         }
     }
 }
