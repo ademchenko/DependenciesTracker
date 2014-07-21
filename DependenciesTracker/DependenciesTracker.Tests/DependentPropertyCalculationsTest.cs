@@ -276,15 +276,16 @@ namespace DependenciesTracker.Tests.PathBuilding
 
     public class DependentPropertyCalculationsTest
     {
+        private static readonly Random _random = new Random();
+
         [Fact]
         public void Init_SimpleValueTypePropertyDependency()
         {
             var dependencyMap = new DependenciesMap<TestOrder>()
                 .AddMap(o => o.Cost, o => 2 * o.Quantity, o => o.Quantity);
 
-            var random = new Random();
-            var price = random.Next(1, 100);
-            var quantity = random.Next(100, 200);
+            var price = _random.Next(1, 100);
+            var quantity = _random.Next(100, 200);
 
             var order = new TestOrder { Price = price, Quantity = quantity };
             var costPropertyChangeRaiseCount = 0;
@@ -367,9 +368,8 @@ namespace DependenciesTracker.Tests.PathBuilding
             var dependencyMap = new DependenciesMap<TestOrder>()
                 .AddMap(o => o.Cost, o => o.Price * o.Quantity, o => o.Quantity, o => o.Price);
 
-            var random = new Random();
-            var price = random.Next(1, 100);
-            var quantity = random.Next(100, 200);
+            var price = _random.Next(1, 100);
+            var quantity = _random.Next(100, 200);
 
             var order = new TestOrder { Price = price, Quantity = quantity };
 
@@ -400,9 +400,8 @@ namespace DependenciesTracker.Tests.PathBuilding
             var dependencyMap = new DependenciesMap<TestOrder>()
                 .AddMap(o => o.Cost, o => o.Price * o.Quantity, o => o.Quantity, o => o.Price);
 
-            var random = new Random();
-            var price = random.Next(1, 100);
-            var quantity = random.Next(100, 200);
+            var price = _random.Next(1, 100);
+            var quantity = _random.Next(100, 200);
 
             var order = new TestOrder { Price = price, Quantity = quantity };
 
@@ -513,8 +512,7 @@ namespace DependenciesTracker.Tests.PathBuilding
                 .AddMap(o => o.ChildItemDoubledPrice,
                     o => o.ChildItem == null ? -1 : 2 * o.ChildItem.Price, o => o.ChildItem.Price);
 
-            var random = new Random();
-            var childItemPrice = random.Next(1, 100);
+            var childItemPrice = _random.Next(1, 100);
 
             var order = new TestOrder { ChildItem = new ChildOrderItem { Price = childItemPrice } };
 
@@ -646,14 +644,12 @@ namespace DependenciesTracker.Tests.PathBuilding
                     o => DependenciesTracker.CollectionExtensions.EachElement(o).Quantity,
                     o => DependenciesTracker.CollectionExtensions.EachElement(o).Quantity);
 
-            var random = new Random();
-
-            var orderItem1Price = random.Next(0, 10);
-            var orderItem1Quantity = random.Next(0, 10);
-            var orderItem2Price = random.Next(0, 10);
-            var orderItem2Quantity = random.Next(0, 10);
-            var orderItem3Price = random.Next(0, 10);
-            var orderItem3Quantity = random.Next(0, 10);
+            var orderItem1Price = _random.Next(0, 10);
+            var orderItem1Quantity = _random.Next(0, 10);
+            var orderItem2Price = _random.Next(0, 10);
+            var orderItem2Quantity = _random.Next(0, 10);
+            var orderItem3Price = _random.Next(0, 10);
+            var orderItem3Quantity = _random.Next(0, 10);
 
             var expectedTotalCost = orderItem1Price * orderItem1Quantity + orderItem2Price * orderItem2Quantity +
                                     orderItem3Price * orderItem3Quantity;
@@ -684,10 +680,7 @@ namespace DependenciesTracker.Tests.PathBuilding
             Assert.Equal(2, totalCostPropertyChangeRaiseCount);
         }
 
-        [Fact(
-            Skip =
-                "Issue #6 is created but not yet fixed. It's a low priority issue which doesn't affect the first release"
-            )]
+        [Fact(Skip = "Issue #6 is created but not yet fixed. It's a low priority issue which doesn't affect the first release")]
         public void Init_CollectionAsARoot_EachElement_ValTypeProperty_Issue6()
         {
             var dependencyMap = new DependenciesMap<TestOrderItemsCollection>()
@@ -695,14 +688,12 @@ namespace DependenciesTracker.Tests.PathBuilding
                     o => DependenciesTracker.CollectionExtensions.EachElement(o).Quantity,
                     o => DependenciesTracker.CollectionExtensions.EachElement(o).Quantity);
 
-            var random = new Random();
-
-            var orderItem1Price = random.Next(0, 10);
-            var orderItem1Quantity = random.Next(0, 10);
-            var orderItem2Price = random.Next(0, 10);
-            var orderItem2Quantity = random.Next(0, 10);
-            var orderItem3Price = random.Next(0, 10);
-            var orderItem3Quantity = random.Next(0, 10);
+            var orderItem1Price = _random.Next(0, 10);
+            var orderItem1Quantity = _random.Next(0, 10);
+            var orderItem2Price = _random.Next(0, 10);
+            var orderItem2Quantity = _random.Next(0, 10);
+            var orderItem3Price = _random.Next(0, 10);
+            var orderItem3Quantity = _random.Next(0, 10);
 
             var expectedTotalCost = orderItem1Price * orderItem1Quantity + orderItem2Price * orderItem2Quantity +
                                     orderItem3Price * orderItem3Quantity;
@@ -733,7 +724,7 @@ namespace DependenciesTracker.Tests.PathBuilding
             Assert.Equal(1, totalCostPropertyChangeRaiseCount);
         }
 
-		[Fact]
+        [Fact]
         public void Init_CollectionAsAProperty_EachElement_ValTypeProperty()
         {
             var dependencyMap = new DependenciesMap<TestOrder>()
@@ -743,16 +734,14 @@ namespace DependenciesTracker.Tests.PathBuilding
                     o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Quantity,
                     o => o.ChildItem);
 
-            var random = new Random();
-
-            var childItemPrice = random.Next(0, 10);
-            var childItemQuantity = random.Next(0, 10);
-            var childItem1Price = random.Next(0, 10);
-            var childItem1Quantity = random.Next(0, 10);
-            var childItem2Price = random.Next(0, 10);
-            var childItem2Quantity = random.Next(0, 10);
-            var childItem3Price = random.Next(0, 10);
-            var child3Quantity = random.Next(0, 10);
+            var childItemPrice = _random.Next(0, 10);
+            var childItemQuantity = _random.Next(0, 10);
+            var childItem1Price = _random.Next(0, 10);
+            var childItem1Quantity = _random.Next(0, 10);
+            var childItem2Price = _random.Next(0, 10);
+            var childItem2Quantity = _random.Next(0, 10);
+            var childItem3Price = _random.Next(0, 10);
+            var child3Quantity = _random.Next(0, 10);
 
             var expectedChildItemsTotalCost = childItemPrice * childItemQuantity + childItem1Price * childItem1Quantity +
                                               childItem2Price * childItem2Quantity + childItem3Price * child3Quantity;
@@ -786,7 +775,7 @@ namespace DependenciesTracker.Tests.PathBuilding
             Assert.Equal(3, childItemsTotalCostPropertyChangeRaiseCount);
         }
 
-        [Fact(Skip ="Issue #6 is created but not yet fixed. It's a low priority issue which doesn't affect the first release")]
+        [Fact(Skip = "Issue #6 is created but not yet fixed. It's a low priority issue which doesn't affect the first release")]
         public void Init_CollectionAsAProperty_EachElement_ValTypeProperty_Issue6()
         {
             var dependencyMap = new DependenciesMap<TestOrder>()
@@ -799,16 +788,14 @@ namespace DependenciesTracker.Tests.PathBuilding
                     o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Quantity,
                     o => o.ChildItem);
 
-            var random = new Random();
-
-            var childItemPrice = random.Next(0, 10);
-            var childItemQuantity = random.Next(0, 10);
-            var childItem1Price = random.Next(0, 10);
-            var childItem1Quantity = random.Next(0, 10);
-            var childItem2Price = random.Next(0, 10);
-            var childItem2Quantity = random.Next(0, 10);
-            var childItem3Price = random.Next(0, 10);
-            var child3Quantity = random.Next(0, 10);
+            var childItemPrice = _random.Next(0, 10);
+            var childItemQuantity = _random.Next(0, 10);
+            var childItem1Price = _random.Next(0, 10);
+            var childItem1Quantity = _random.Next(0, 10);
+            var childItem2Price = _random.Next(0, 10);
+            var childItem2Quantity = _random.Next(0, 10);
+            var childItem3Price = _random.Next(0, 10);
+            var child3Quantity = _random.Next(0, 10);
 
             var expectedChildItemsTotalCost = childItemPrice * childItemQuantity + childItem1Price * childItem1Quantity +
                                               childItem2Price * childItem2Quantity + childItem3Price * child3Quantity;
@@ -852,14 +839,12 @@ namespace DependenciesTracker.Tests.PathBuilding
 
             var unalignedIntMatrixElementsTotalSumPropertyChangeRaiseCount = 0;
 
-            var random = new Random();
-
-            var item00 = random.Next(0, 10);
-            var item01 = random.Next(0, 10);
-            var item10 = random.Next(0, 10);
-            var item11 = random.Next(0, 10);
-            var item12 = random.Next(0, 10);
-            var item20 = random.Next(0, 10);
+            var item00 = _random.Next(0, 10);
+            var item01 = _random.Next(0, 10);
+            var item10 = _random.Next(0, 10);
+            var item11 = _random.Next(0, 10);
+            var item12 = _random.Next(0, 10);
+            var item20 = _random.Next(0, 10);
 
             var expectedSum = item00 + item01 + item10 + item11 + item12 + item20;
 
@@ -899,14 +884,13 @@ namespace DependenciesTracker.Tests.PathBuilding
 
             var maxLengthStringInUnalignedStringMatrixPropertyChangeRaiseCount = 0;
 
-            var random = new Random();
 
-            var item00 = Guid.NewGuid().ToString().Substring(0, random.Next(0, 10));
-            var item01 = Guid.NewGuid().ToString().Substring(0, random.Next(0, 10));
-            var item10 = Guid.NewGuid().ToString().Substring(0, random.Next(0, 10));
-            var item11 = Guid.NewGuid().ToString().Substring(0, random.Next(10, 20));
-            var item12 = Guid.NewGuid().ToString().Substring(0, random.Next(0, 10));
-            var item20 = Guid.NewGuid().ToString().Substring(0, random.Next(0, 10));
+            var item00 = Guid.NewGuid().ToString().Substring(0, _random.Next(0, 10));
+            var item01 = Guid.NewGuid().ToString().Substring(0, _random.Next(0, 10));
+            var item10 = Guid.NewGuid().ToString().Substring(0, _random.Next(0, 10));
+            var item11 = Guid.NewGuid().ToString().Substring(0, _random.Next(10, 20));
+            var item12 = Guid.NewGuid().ToString().Substring(0, _random.Next(0, 10));
+            var item20 = Guid.NewGuid().ToString().Substring(0, _random.Next(0, 10));
 
             var order = new TestOrder
             {
@@ -944,10 +928,9 @@ namespace DependenciesTracker.Tests.PathBuilding
                                     .AddMap(o => o.Cost, o => o.Price * o.Quantity, o => o.Price, o => o.Quantity)
                                     .AddMap(o => o.CostWithDiscount, o => 0.9m * o.Cost, o => o.Cost);
 
-            var random = new Random();
 
-            var price = random.Next(1, 10);
-            var quantity = random.Next(1, 10);
+            var price = _random.Next(1, 10);
+            var quantity = _random.Next(1, 10);
 
             var expectedCostWithDiscount = 0.9m * price * quantity;
 
@@ -980,10 +963,9 @@ namespace DependenciesTracker.Tests.PathBuilding
                                     .AddMap(o => o.CostWithDiscount, o => 0.9m * o.Cost, o => o.Cost)
                                     .AddMap(o => o.Cost, o => o.Price * o.Quantity, o => o.Price, o => o.Quantity);
 
-            var random = new Random();
 
-            var price = random.Next(1, 10);
-            var quantity = random.Next(1, 10);
+            var price = _random.Next(1, 10);
+            var quantity = _random.Next(1, 10);
 
             var expectedCostWithDiscount = 0.9m * price * quantity;
 
@@ -1017,10 +999,8 @@ namespace DependenciesTracker.Tests.PathBuilding
                                     .AddMap(o => o.CostWithDiscount, o => 0.9m * o.Cost, o => o.Cost)
                                     .AddMap(o => o.Cost, o => o.Price * o.Quantity, o => o.Price, o => o.Quantity);
 
-            var random = new Random();
-
-            var price = random.Next(1, 10);
-            var quantity = random.Next(1, 10);
+            var price = _random.Next(1, 10);
+            var quantity = _random.Next(1, 10);
 
             var expectedCostWithDiscount = 0.9m * price * quantity;
 
@@ -1045,6 +1025,83 @@ namespace DependenciesTracker.Tests.PathBuilding
             Assert.Equal(expectedCostWithDiscount, order.CostWithDiscount);
             Assert.Equal(1, costWithDiscountPropertyChangeRaiseCount);
         }
-		
+
+        [Fact]
+        public void SimpleProperty_Change()
+        {
+            var dependencyMap = new DependenciesMap<TestOrder>()
+                                      .AddMap(o => o.Cost, o => o.Price * o.Quantity, o => o.Price, o => o.Quantity);
+
+            var price = _random.Next(1, 10);
+            var quantity = _random.Next(10, 20);
+
+            var expectedCost = price * quantity;
+
+            var testOrder = new TestOrder { Price = price };
+
+            dependencyMap.StartTracking(testOrder);
+
+            Assert.Equal(0, testOrder.Cost);
+
+            int costPropertyChangeRaiseCount = 0;
+
+            testOrder.PropertyChanged += (_1, e) =>
+            {
+                if (e.PropertyName == "Cost")
+                    costPropertyChangeRaiseCount++;
+            };
+
+            testOrder.Quantity = quantity;
+
+            Assert.Equal(expectedCost, testOrder.Cost);
+            Assert.Equal(1, costPropertyChangeRaiseCount);
+        }
+
+        [Fact]
+        public void SimplePropertyChain_ChangeOfLeafAndMiddleProperty()
+        {
+            var dependencyMap = new DependenciesMap<TestOrder>()
+                                        .AddMap(o => o.ChildItemDoubledPrice, o => o.ChildItem == null ? -1 : 2 * o.ChildItem.Price, o => o.ChildItem.Price);
+
+            var price = _random.Next(1, 10);
+
+            var expectedDoubledPrice = 2 * price;
+
+            var testOrder = new TestOrder { Price = price };
+
+            dependencyMap.StartTracking(testOrder);
+
+            Assert.Equal(-1, testOrder.ChildItemDoubledPrice);
+
+            int childItemDoubledPricePropertyChangeOnSettingChildItemRaiseCount = 0;
+
+            PropertyChangedEventHandler propertyChangeOnSettingChildItem = (_1, e) =>
+            {
+                if (e.PropertyName == "ChildItemDoubledPrice")
+                    childItemDoubledPricePropertyChangeOnSettingChildItemRaiseCount++;
+            };
+
+            testOrder.PropertyChanged += propertyChangeOnSettingChildItem;
+
+            testOrder.ChildItem = new ChildOrderItem();
+
+            Assert.Equal(0, testOrder.ChildItemDoubledPrice);
+            Assert.Equal(1, childItemDoubledPricePropertyChangeOnSettingChildItemRaiseCount);
+
+            int childItemDoubledPricePropertyChangeOnSettingChildItemPriceRaiseCount = 0;
+
+            PropertyChangedEventHandler propertyChangeOnSettingChildItemPrice = (_1, e) =>
+            {
+                if (e.PropertyName == "ChildItemDoubledPrice")
+                    childItemDoubledPricePropertyChangeOnSettingChildItemPriceRaiseCount++;
+            };
+
+            testOrder.PropertyChanged += propertyChangeOnSettingChildItemPrice;
+
+            testOrder.ChildItem.Price = price;
+
+            Assert.Equal(expectedDoubledPrice, testOrder.ChildItemDoubledPrice);
+            Assert.Equal(1, childItemDoubledPricePropertyChangeOnSettingChildItemPriceRaiseCount);
+        }
     }
 }
