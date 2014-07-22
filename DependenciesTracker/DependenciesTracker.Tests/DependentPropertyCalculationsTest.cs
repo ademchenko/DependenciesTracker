@@ -1,6 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using JetBrains.Annotations;
 using Xunit;
@@ -1058,22 +1059,89 @@ namespace DependenciesTracker.Tests.PathBuilding
         }
 
         [Fact]
-        public void SimplePropertyChain_ChangeOfLeafAndMiddleProperty()
+        public void SimplePropertyChain_ChangeOfLeafProperty()
         {
             var dependencyMap = new DependenciesMap<TestOrder>()
                                         .AddMap(o => o.ChildItemDoubledPrice, o => o.ChildItem == null ? -1 : 2 * o.ChildItem.Price, o => o.ChildItem.Price);
 
-            var price = _random.Next(1, 10);
+            var priceOnLeafChange = _random.Next(1, 10);
 
-            var expectedDoubledPrice = 2 * price;
+            var expectedDoubledPriceOnLeafChange = 2 * priceOnLeafChange;
 
-            var testOrder = new TestOrder { Price = price };
+            var testOrder = new TestOrder { ChildItem = new ChildOrderItem() };
+
+            dependencyMap.StartTracking(testOrder);
+
+            Assert.Equal(0, testOrder.ChildItemDoubledPrice);
+
+            var childItemDoubledPricePropertyChangeRaiseCount = 0;
+
+            PropertyChangedEventHandler propertyChangeOnSettingChildItemPrice = (_1, e) =>
+            {
+                if (e.PropertyName == "ChildItemDoubledPrice")
+                    childItemDoubledPricePropertyChangeRaiseCount++;
+            };
+
+            testOrder.PropertyChanged += propertyChangeOnSettingChildItemPrice;
+
+            testOrder.ChildItem.Price = priceOnLeafChange;
+
+            Assert.Equal(1, childItemDoubledPricePropertyChangeRaiseCount);
+            Assert.Equal(expectedDoubledPriceOnLeafChange, testOrder.ChildItemDoubledPrice);
+        }
+
+        [Fact]
+        public void SimplePropertyChain_ChangeOfInnerProperty()
+        {
+            var dependencyMap = new DependenciesMap<TestOrder>()
+                                        .AddMap(o => o.ChildItemDoubledPrice, o => o.ChildItem == null ? -1 : 2 * o.ChildItem.Price, o => o.ChildItem.Price);
+
+            var initialChildItemPrice = _random.Next(1, 10);
+            var priceOnChildItemChange = _random.Next(1, 10);
+
+            var expectedDoubledPrice = 2 * priceOnChildItemChange;
+
+            var testOrder = new TestOrder { ChildItem = new ChildOrderItem { Price = initialChildItemPrice } };
+
+            dependencyMap.StartTracking(testOrder);
+
+            Assert.Equal(2 * initialChildItemPrice, testOrder.ChildItemDoubledPrice);
+
+            var childItemDoubledPricePropertyChangeRaiseCount = 0;
+
+            PropertyChangedEventHandler propertyChangeOnSettingChildItemPrice = (_1, e) =>
+            {
+                if (e.PropertyName == "ChildItemDoubledPrice")
+                    childItemDoubledPricePropertyChangeRaiseCount++;
+            };
+
+            testOrder.PropertyChanged += propertyChangeOnSettingChildItemPrice;
+
+            testOrder.ChildItem = new ChildOrderItem { Price = priceOnChildItemChange };
+
+            Assert.Equal(1, childItemDoubledPricePropertyChangeRaiseCount);
+            Assert.Equal(expectedDoubledPrice, testOrder.ChildItemDoubledPrice);
+        }
+
+        [Fact]
+        public void SimplePropertyChain_ChangeOfLeafAndInnerProperty()
+        {
+            var dependencyMap = new DependenciesMap<TestOrder>()
+                                        .AddMap(o => o.ChildItemDoubledPrice, o => o.ChildItem == null ? -1 : 2 * o.ChildItem.Price, o => o.ChildItem.Price);
+
+            var priceOnMiddleChange = _random.Next(1, 10);
+            var priceOnLeafChange = _random.Next(1, 10);
+
+            var expectedDoubledPriceOnMiddleChange = 2 * priceOnMiddleChange;
+            var expectedDoubledPriceOnLeafChange = 2 * priceOnLeafChange;
+
+            var testOrder = new TestOrder();
 
             dependencyMap.StartTracking(testOrder);
 
             Assert.Equal(-1, testOrder.ChildItemDoubledPrice);
 
-            int childItemDoubledPricePropertyChangeOnSettingChildItemRaiseCount = 0;
+            var childItemDoubledPricePropertyChangeOnSettingChildItemRaiseCount = 0;
 
             PropertyChangedEventHandler propertyChangeOnSettingChildItem = (_1, e) =>
             {
@@ -1083,12 +1151,12 @@ namespace DependenciesTracker.Tests.PathBuilding
 
             testOrder.PropertyChanged += propertyChangeOnSettingChildItem;
 
-            testOrder.ChildItem = new ChildOrderItem();
+            testOrder.ChildItem = new ChildOrderItem { Price = priceOnMiddleChange };
 
-            Assert.Equal(0, testOrder.ChildItemDoubledPrice);
+            Assert.Equal(expectedDoubledPriceOnMiddleChange, testOrder.ChildItemDoubledPrice);
             Assert.Equal(1, childItemDoubledPricePropertyChangeOnSettingChildItemRaiseCount);
 
-            int childItemDoubledPricePropertyChangeOnSettingChildItemPriceRaiseCount = 0;
+            var childItemDoubledPricePropertyChangeOnSettingChildItemPriceRaiseCount = 0;
 
             PropertyChangedEventHandler propertyChangeOnSettingChildItemPrice = (_1, e) =>
             {
@@ -1098,10 +1166,36 @@ namespace DependenciesTracker.Tests.PathBuilding
 
             testOrder.PropertyChanged += propertyChangeOnSettingChildItemPrice;
 
-            testOrder.ChildItem.Price = price;
+            testOrder.ChildItem.Price = priceOnLeafChange;
 
-            Assert.Equal(expectedDoubledPrice, testOrder.ChildItemDoubledPrice);
+            Assert.Equal(expectedDoubledPriceOnLeafChange, testOrder.ChildItemDoubledPrice);
             Assert.Equal(1, childItemDoubledPricePropertyChangeOnSettingChildItemPriceRaiseCount);
+        }
+
+        [Fact]
+        public void SimplePropertyChain_OrphansDoesNotHaveAnImpactOnDependentProperty()
+        {
+            var dependencyMap = new DependenciesMap<TestOrder>()
+                .AddMap(o => o.ChildItemDoubledPrice, o => 2 * o.ChildItem.Price, o => o.ChildItem.Price);
+
+            var testOrder = new TestOrder { ChildItem = new ChildOrderItem { Price = _random.Next(0, 10) } };
+
+            dependencyMap.StartTracking(testOrder);
+
+            //Changing the Price property of the child item has the impact on dependent property 
+            //while it's an item of a root object...
+            Assert.PropertyChanged(testOrder, "ChildItemDoubledPrice", () => { testOrder.ChildItem.Price = _random.Next(0, 10); });
+
+            var orphanChildItem = testOrder.ChildItem;
+
+            testOrder.ChildItem = new ChildOrderItem { Price = _random.Next(0, 10) };
+            
+            //Later when we replaced those child item with the new one
+            //there shouldn't be any property change subscription leaks, i.e.
+            //changing the Price property of the old child item shouldn't have any impact on dependent property
+            testOrder.PropertyChanged += (_1, _2) => Assert.False(true, "Orphan child item impacts dependent property");
+
+            orphanChildItem.Price = _random.Next(0, 10);
         }
     }
 }

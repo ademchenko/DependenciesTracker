@@ -70,9 +70,10 @@ namespace DependenciesTracker
 
             private void OnObservedPropertyChanged()
             {
+                
                 if (Ancestor != null)
                     Ancestor.Dispose();
-
+                
                 Ancestor = InitAncestor();
                 OnChanged(PathItem);
             }
