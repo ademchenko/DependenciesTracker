@@ -1,8 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Xml.Schema;
 using JetBrains.Annotations;
 using Xunit;
 
@@ -179,10 +181,20 @@ namespace DependenciesTracker.Tests.PathBuilding
         public int ChildItemsTotalCost
         {
             get { return _childItemsTotalCost; }
-            set
+            private set
             {
                 _childItemsTotalCost = value;
                 OnPropertyChanged("ChildItemsTotalCost");
+            }
+        }
+
+        public int ChildItemsTotalQuantity
+        {
+            get { return _childItemsTotalCost; }
+            private set
+            {
+                _childItemsTotalCost = value;
+                OnPropertyChanged("ChildItemsTotalQuantity");
             }
         }
 
@@ -277,6 +289,7 @@ namespace DependenciesTracker.Tests.PathBuilding
 
     public class DependentPropertyCalculationsTest
     {
+        [NotNull]
         private static readonly Random _random = new Random();
 
         [Fact]
@@ -1189,13 +1202,53 @@ namespace DependenciesTracker.Tests.PathBuilding
             var orphanChildItem = testOrder.ChildItem;
 
             testOrder.ChildItem = new ChildOrderItem { Price = _random.Next(0, 10) };
-            
+
             //Later when we replaced those child item with the new one
             //there shouldn't be any property change subscription leaks, i.e.
             //changing the Price property of the old child item shouldn't have any impact on dependent property
             testOrder.PropertyChanged += (_1, _2) => Assert.False(true, "Orphan child item impacts dependent property");
 
             orphanChildItem.Price = _random.Next(0, 10);
+        }
+
+        [Fact]
+        public void CollectionProperty_LeafPropertyChange()
+        {
+            var dependenciesMap = new DependenciesMap<TestOrder>()
+                                        .AddMap(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
+                                            o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Quantity);
+
+            var itemsCount = _random.Next(1, 20);
+            var itemQuantities = Enumerable.Range(0, itemsCount).Select(_ => _random.Next(0, 100)).ToList();
+
+            var initiallyExpectedTotalQuantity = itemQuantities.Sum();
+            
+            var itemsToChangeIndices = new HashSet<int>();
+
+            foreach (var index in Enumerable.Range(0, Math.Min(5, itemsCount)).Select(_ => _random.Next(0, itemsCount)))
+                itemsToChangeIndices.Add(index);
+
+            var testOrder = new TestOrder
+            {
+                ChildItems = new ObservableCollection<ChildOrderItem>(itemQuantities.Select(q => new ChildOrderItem { Quantity = q }))
+            };
+
+            Assert.Equal(0, testOrder.ChildItemsTotalQuantity);
+
+            dependenciesMap.StartTracking(testOrder);
+
+            Assert.Equal(initiallyExpectedTotalQuantity, testOrder.ChildItemsTotalQuantity);
+
+            foreach (var itemToChangeIndex in itemsToChangeIndices)
+            {
+                var newQuantity = _random.Next(0, 100);
+                itemQuantities[itemToChangeIndex] = newQuantity;
+                testOrder.ChildItems[itemToChangeIndex].Quantity = newQuantity;
+            }
+
+            var expectedChangedTotalQuantity = itemQuantities.Sum();
+
+            Assert.Equal(expectedChangedTotalQuantity, testOrder.ChildItemsTotalQuantity);
         }
     }
 }
