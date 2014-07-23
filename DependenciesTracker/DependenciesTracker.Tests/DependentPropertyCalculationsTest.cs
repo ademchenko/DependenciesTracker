@@ -1,10 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Linq;
-using System.Xml.Schema;
 using JetBrains.Annotations;
 using Xunit;
 
@@ -264,6 +263,7 @@ namespace DependenciesTracker.Tests.PathBuilding
     {
         private int _doubledItemsCount;
         private int _totalCost;
+        private int _totalQuantity;
 
         public int DoubledItemsCount
         {
@@ -284,6 +284,21 @@ namespace DependenciesTracker.Tests.PathBuilding
                 OnPropertyChanged(new PropertyChangedEventArgs("TotalCost"));
             }
         }
+
+        public int TotalQuantity
+        {
+            get { return _totalQuantity; }
+            private set
+            {
+                _totalQuantity = value;
+                OnPropertyChanged(new PropertyChangedEventArgs("TotalQuantity"));
+            }
+        }
+
+        public TestOrderItemsCollection() { }
+
+        public TestOrderItemsCollection(IEnumerable<ChildOrderItem> collection)
+            : base(collection) { }
     }
 
 
@@ -1212,7 +1227,7 @@ namespace DependenciesTracker.Tests.PathBuilding
         }
 
         [Fact]
-        public void CollectionProperty_LeafPropertyChange()
+        public void CollectionProperty_CollectionItemLeafPropertyChange()
         {
             var dependenciesMap = new DependenciesMap<TestOrder>()
                                         .AddMap(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
@@ -1222,7 +1237,7 @@ namespace DependenciesTracker.Tests.PathBuilding
             var itemQuantities = Enumerable.Range(0, itemsCount).Select(_ => _random.Next(0, 100)).ToList();
 
             var initiallyExpectedTotalQuantity = itemQuantities.Sum();
-            
+
             var itemsToChangeIndices = new HashSet<int>();
 
             foreach (var index in Enumerable.Range(0, Math.Min(5, itemsCount)).Select(_ => _random.Next(0, itemsCount)))
@@ -1239,16 +1254,340 @@ namespace DependenciesTracker.Tests.PathBuilding
 
             Assert.Equal(initiallyExpectedTotalQuantity, testOrder.ChildItemsTotalQuantity);
 
+            var totalQuantityChange = 0;
+
             foreach (var itemToChangeIndex in itemsToChangeIndices)
             {
-                var newQuantity = _random.Next(0, 100);
-                itemQuantities[itemToChangeIndex] = newQuantity;
+                var quantityChange = _random.Next(1, 100);
+                if (_random.Next(0, 2) == 0)
+                    quantityChange = -quantityChange;
+
+                totalQuantityChange += quantityChange;
+
+                var newQuantity = itemQuantities[itemToChangeIndex] + quantityChange;
+
                 testOrder.ChildItems[itemToChangeIndex].Quantity = newQuantity;
             }
 
-            var expectedChangedTotalQuantity = itemQuantities.Sum();
+            var expectedChangedTotalQuantity = initiallyExpectedTotalQuantity + totalQuantityChange;
+
+            CheckExpectedQuantityChanged(initiallyExpectedTotalQuantity, expectedChangedTotalQuantity);
 
             Assert.Equal(expectedChangedTotalQuantity, testOrder.ChildItemsTotalQuantity);
+        }
+
+        [Fact]
+        public void RootAsACollection_CollectionItemLeafPropertyChange()
+        {
+            var dependenciesMap = new DependenciesMap<TestOrderItemsCollection>()
+                                        .AddMap(o => o.TotalQuantity, o => o.Sum(i => i.Quantity),
+                                            o => DependenciesTracker.CollectionExtensions.EachElement(o).Quantity);
+
+            var itemsCount = _random.Next(1, 20);
+            var itemQuantities = Enumerable.Range(0, itemsCount).Select(_ => _random.Next(0, 100)).ToList();
+
+            var initiallyExpectedTotalQuantity = itemQuantities.Sum();
+
+            var itemsToChangeIndices = new HashSet<int>();
+
+            foreach (var index in Enumerable.Range(0, Math.Min(5, itemsCount)).Select(_ => _random.Next(0, itemsCount)))
+                itemsToChangeIndices.Add(index);
+
+            var orderItems = new TestOrderItemsCollection(itemQuantities.Select(q => new ChildOrderItem { Quantity = q }));
+
+            Assert.Equal(0, orderItems.TotalQuantity);
+
+            dependenciesMap.StartTracking(orderItems);
+
+            Assert.Equal(initiallyExpectedTotalQuantity, orderItems.TotalQuantity);
+
+            var totalQuantityChange = 0;
+
+            foreach (var itemToChangeIndex in itemsToChangeIndices)
+            {
+                var quantityChange = _random.Next(1, 100);
+                if (_random.Next(0, 2) == 0)
+                    quantityChange = -quantityChange;
+
+                totalQuantityChange += quantityChange;
+
+                var newQuantity = itemQuantities[itemToChangeIndex] + quantityChange;
+
+                orderItems[itemToChangeIndex].Quantity = newQuantity;
+            }
+
+            if (totalQuantityChange == 0)
+                throw new InvalidOperationException("Wrong test condition. totalQuantityChange cannot be 0 since we need to get different value to ensure that dependent property recalculation works.");
+
+            var expectedChangedTotalQuantity = initiallyExpectedTotalQuantity + totalQuantityChange;
+
+            CheckExpectedQuantityChanged(initiallyExpectedTotalQuantity, expectedChangedTotalQuantity);
+
+            Assert.Equal(expectedChangedTotalQuantity, orderItems.TotalQuantity);
+        }
+
+        [Fact]
+        public void CollectionProperty_Add()
+        {
+            var dependenciesMap = new DependenciesMap<TestOrder>()
+                                        .AddMap(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
+                                            o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Quantity);
+
+            var itemsCount = _random.Next(2, 6);
+            var itemQuantities = Enumerable.Range(0, itemsCount).Select(_ => _random.Next(0, 100)).ToList();
+
+            var initiallyExpectedTotalQuantity = itemQuantities.Sum();
+
+            var testOrder = new TestOrder
+            {
+                ChildItems = new ObservableCollection<ChildOrderItem>(itemQuantities.Select(q => new ChildOrderItem { Quantity = q }))
+            };
+
+            Assert.Equal(0, testOrder.ChildItemsTotalQuantity);
+
+            dependenciesMap.StartTracking(testOrder);
+
+            Assert.Equal(initiallyExpectedTotalQuantity, testOrder.ChildItemsTotalQuantity);
+
+            var itemsToAddCount = _random.Next(1, 5);
+            var newItemQuantities = Enumerable.Range(0, itemsToAddCount).Select(_ => _random.Next(1, 100)).ToList();
+            var itemsToAdd = newItemQuantities.Select(q => new ChildOrderItem { Quantity = q });
+
+            var collectionChangeRaiseCount = 0;
+            testOrder.ChildItems.CollectionChanged += (sender, e) =>
+            {
+                if (e.Action != NotifyCollectionChangedAction.Add)
+                    throw new InvalidOperationException("Wrong test condition. This test should check \"Add\" action.");
+
+                collectionChangeRaiseCount++;
+            };
+
+            foreach (var item in itemsToAdd)
+            {
+                var indexToAdd = _random.Next(0, testOrder.ChildItems.Count);
+                testOrder.ChildItems.Insert(indexToAdd, item);
+            }
+
+            //Yes, the exception message is not fully correct (in the case of collectionChangeRaiseCount > itemsCount)
+            if (collectionChangeRaiseCount != itemsToAddCount)
+                throw new InvalidOperationException("Wrong test condition. Probably some of \"Add\" events hasn't been raised.");
+
+            var expectedChangedTotalQuantity = initiallyExpectedTotalQuantity + newItemQuantities.Sum();
+
+            CheckExpectedQuantityChanged(initiallyExpectedTotalQuantity, expectedChangedTotalQuantity);
+
+            Assert.Equal(expectedChangedTotalQuantity, testOrder.ChildItemsTotalQuantity);
+        }
+
+        [Fact]
+        public void CollectionProperty_Remove()
+        {
+            var dependenciesMap = new DependenciesMap<TestOrder>()
+                                        .AddMap(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
+                                            o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Quantity);
+
+            var itemsCount = _random.Next(2, 6);
+            var itemQuantities = Enumerable.Range(0, itemsCount).Select(_ => _random.Next(1, 100)).ToList();
+
+            var itemsToRemoveCount = _random.Next(1, itemsCount);
+
+            var initiallyExpectedTotalQuantity = itemQuantities.Sum();
+
+            var testOrder = new TestOrder
+            {
+                ChildItems = new ObservableCollection<ChildOrderItem>(itemQuantities.Select(q => new ChildOrderItem { Quantity = q }))
+            };
+
+            Assert.Equal(0, testOrder.ChildItemsTotalQuantity);
+
+            dependenciesMap.StartTracking(testOrder);
+
+            Assert.Equal(initiallyExpectedTotalQuantity, testOrder.ChildItemsTotalQuantity);
+
+            var collectionChangedRaiseCount = 0;
+
+            testOrder.ChildItems.CollectionChanged += (sender, e) =>
+            {
+                if (e.Action != NotifyCollectionChangedAction.Remove)
+                    throw new InvalidOperationException("Wrong test condition. This test should check \"Remove\" action.");
+
+                collectionChangedRaiseCount++;
+            };
+
+            for (int i = 0; i < itemsToRemoveCount; i++)
+            {
+                var indexToRemove = _random.Next(0, testOrder.ChildItems.Count);
+                itemQuantities.RemoveAt(indexToRemove);
+                testOrder.ChildItems.RemoveAt(indexToRemove);
+
+            }
+
+            //Yes, the exception message is not fully correct (in the case of collectionChangeRaiseCount > itemsToRemoveCount)
+            if (collectionChangedRaiseCount != itemsToRemoveCount)
+                throw new InvalidOperationException("Wrong test condition. Probably some of \"Remove\" events hasn't been raised.");
+
+            var expectedChangedTotalQuantity = itemQuantities.Sum();
+
+            CheckExpectedQuantityChanged(initiallyExpectedTotalQuantity, expectedChangedTotalQuantity);
+            
+            Assert.Equal(expectedChangedTotalQuantity, testOrder.ChildItemsTotalQuantity);
+        }
+
+
+        [Fact]
+        public void CollectionProperty_Replace()
+        {
+            var dependenciesMap = new DependenciesMap<TestOrder>()
+                                        .AddMap(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
+                                            o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Quantity);
+
+            var itemsCount = _random.Next(2, 6);
+            var itemQuantities = Enumerable.Range(0, itemsCount).Select(_ => _random.Next(0, 100)).ToList();
+
+            var initiallyExpectedTotalQuantity = itemQuantities.Sum();
+
+            var testOrder = new TestOrder
+            {
+                ChildItems = new ObservableCollection<ChildOrderItem>(itemQuantities.Select(q => new ChildOrderItem { Quantity = q }))
+            };
+
+            Assert.Equal(0, testOrder.ChildItemsTotalQuantity);
+
+            dependenciesMap.StartTracking(testOrder);
+
+            Assert.Equal(initiallyExpectedTotalQuantity, testOrder.ChildItemsTotalQuantity);
+
+            var replacedItemIndices = Enumerable.Range(0, _random.Next(1, itemsCount)).Select(_ => _random.Next(0, itemsCount)).Distinct().ToList();
+            var newItemQuantities = new Queue<int>(Enumerable.Range(0, replacedItemIndices.Count).Select(_ => _random.Next(1, 100)));
+
+            var collectionChangeRaiseCount = 0;
+            testOrder.ChildItems.CollectionChanged += (sender, e) =>
+            {
+                if (e.Action != NotifyCollectionChangedAction.Replace)
+                    throw new InvalidOperationException("Wrong test condition. This test should check \"Replace\" action.");
+
+                collectionChangeRaiseCount++;
+            };
+
+            foreach (var itemIndex in replacedItemIndices)
+            {
+                var newQuantity = newItemQuantities.Dequeue();
+                itemQuantities[itemIndex] = newQuantity;
+                
+                var newOrderItem = new ChildOrderItem { Quantity = newQuantity };
+                testOrder.ChildItems[itemIndex] = newOrderItem;
+            }
+
+            //Yes, the exception message is not fully correct (in the case of collectionChangeRaiseCount > itemsToReplaceCount)
+            if (collectionChangeRaiseCount != _random.Next(1, replacedItemIndices.Count))
+                throw new InvalidOperationException("Wrong test condition. Probably some of \"Replace\" events hasn't been raised.");
+
+            var expectedChangedTotalQuantity = itemQuantities.Sum();
+
+            CheckExpectedQuantityChanged(initiallyExpectedTotalQuantity, expectedChangedTotalQuantity);
+
+            Assert.Equal(expectedChangedTotalQuantity, testOrder.ChildItemsTotalQuantity);
+        }
+
+        [Fact]
+        public void CollectionProperty_Move()
+        {
+            var dependenciesMap = new DependenciesMap<TestOrder>()
+                                        .AddMap(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
+                                            o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Quantity);
+
+            var itemsCount = _random.Next(2, 6);
+            var itemQuantities = Enumerable.Range(0, itemsCount).Select(_ => _random.Next(0, 100)).ToList();
+
+            var initiallyExpectedTotalQuantity = itemQuantities.Sum();
+
+            var testOrder = new TestOrder
+            {
+                ChildItems = new ObservableCollection<ChildOrderItem>(itemQuantities.Select(q => new ChildOrderItem { Quantity = q }))
+            };
+
+            Assert.Equal(0, testOrder.ChildItemsTotalQuantity);
+
+            dependenciesMap.StartTracking(testOrder);
+
+            Assert.Equal(initiallyExpectedTotalQuantity, testOrder.ChildItemsTotalQuantity);
+
+            var itemsToMoveCount = _random.Next(0, itemsCount);
+
+            var movedItemIndices = Enumerable.Range(0, itemsToMoveCount).Select(_ => _random.Next(0, itemsCount)).Distinct();
+
+            var collectionChangeRaised = false;
+            testOrder.ChildItems.CollectionChanged += (sender, e) =>
+            {
+                if (e.Action != NotifyCollectionChangedAction.Replace)
+                    throw new InvalidOperationException("Wrong test condition. This test should check \"Replace\" action.");
+
+                collectionChangeRaised = true;
+            };
+
+            //Make one guaranteed movement
+            testOrder.ChildItems.Move(0, itemsCount - 1);
+
+            foreach (var movedItemIndex in movedItemIndices)
+            {
+                //random might return the same as movedItemIndex value. That's the reason why we do one guaranteed (no-random) movement
+                var newIndex = _random.Next(0, itemsCount);
+                testOrder.ChildItems.Move(movedItemIndex, newIndex);
+            }
+            
+            if (!collectionChangeRaised)
+                throw new InvalidOperationException("Wrong test condition. No one \"Move\" event has been raised.");
+
+            Assert.Equal(initiallyExpectedTotalQuantity, testOrder.ChildItemsTotalQuantity);
+        }
+
+
+        [Fact]
+        public void CollectionProperty_Reset()
+        {
+            var dependenciesMap = new DependenciesMap<TestOrder>()
+                                        .AddMap(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
+                                            o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Quantity);
+
+            var itemsCount = _random.Next(2, 6);
+            var itemQuantities = Enumerable.Range(0, itemsCount).Select(_ => _random.Next(0, 100)).ToList();
+
+            var initiallyExpectedTotalQuantity = itemQuantities.Sum();
+
+            var testOrder = new TestOrder
+            {
+                ChildItems = new ObservableCollection<ChildOrderItem>(itemQuantities.Select(q => new ChildOrderItem { Quantity = q }))
+            };
+
+            Assert.Equal(0, testOrder.ChildItemsTotalQuantity);
+
+            dependenciesMap.StartTracking(testOrder);
+
+            Assert.Equal(initiallyExpectedTotalQuantity, testOrder.ChildItemsTotalQuantity);
+
+            var collectionChangedRaised = false;
+            testOrder.ChildItems.CollectionChanged += (sender, e) =>
+            {
+                if (e.Action != NotifyCollectionChangedAction.Reset)
+                    throw new InvalidOperationException("Wrong test condition. This test should check \"Reset\" action.");
+
+                collectionChangedRaised = true;
+            };
+
+            testOrder.ChildItems.Clear();
+
+            if (!collectionChangedRaised)
+                throw new InvalidOperationException("Wrong test condition. \"Add\" event is not raised.");
+
+            CheckExpectedQuantityChanged(initiallyExpectedTotalQuantity, 0);
+
+            Assert.Equal(0, testOrder.ChildItemsTotalQuantity);
+        }
+
+        private static void CheckExpectedQuantityChanged(int initiallyExpectedTotalQuantity, int expectedChangedTotalQuantity)
+        {
+            if (initiallyExpectedTotalQuantity == expectedChangedTotalQuantity)
+                throw new InvalidOperationException("Expected quantity hasn't been really changed");
         }
     }
 }
