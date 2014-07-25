@@ -1519,7 +1519,7 @@ namespace DependenciesTracker.Tests.PathBuilding
             var collectionChangeRaised = false;
             testOrder.ChildItems.CollectionChanged += (sender, e) =>
             {
-                if (e.Action != NotifyCollectionChangedAction.Replace)
+                if (e.Action != NotifyCollectionChangedAction.Move)
                     throw new InvalidOperationException("Wrong test condition. This test should check \"Replace\" action.");
 
                 collectionChangeRaised = true;

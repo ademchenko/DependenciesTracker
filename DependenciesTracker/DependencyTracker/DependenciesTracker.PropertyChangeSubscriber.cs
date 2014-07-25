@@ -70,10 +70,10 @@ namespace DependenciesTracker
 
             private void OnObservedPropertyChanged()
             {
-                
+
                 if (Ancestor != null)
                     Ancestor.Dispose();
-                
+
                 Ancestor = InitAncestor();
                 OnChanged(PathItem);
             }
@@ -158,6 +158,13 @@ namespace DependenciesTracker
                         Ancestors[eventArgs.OldStartingIndex].Dispose();
                         Ancestors[eventArgs.OldStartingIndex] = CreateSubscriber(eventArgs.NewItems.Cast<object>().Single(),
                             PathItem.Ancestor, OnChanged);
+                        return;
+                    case NotifyCollectionChangedAction.Move:
+                        CheckIndexValid(eventArgs.OldStartingIndex, NotifyCollectionChangedAction.Move);
+                        CheckIndexValid(eventArgs.NewStartingIndex, NotifyCollectionChangedAction.Move);
+                        var movingAncestor = Ancestors[eventArgs.OldStartingIndex];
+                        Ancestors.RemoveAt(eventArgs.OldStartingIndex);
+                        Ancestors.Insert(eventArgs.NewStartingIndex, movingAncestor);
                         return;
                     case NotifyCollectionChangedAction.Reset:
                         foreach (var ancestor in Ancestors)
