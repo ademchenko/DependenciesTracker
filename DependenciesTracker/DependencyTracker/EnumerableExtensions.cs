@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using JetBrains.Annotations;
 
-namespace DependenciesTracker
+namespace DependenciesTracking
 {
     internal static class EnumerableExtensions
     {

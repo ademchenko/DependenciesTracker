@@ -1,9 +1,10 @@
 ﻿using System.Collections.ObjectModel;
 using System.Diagnostics;
-using DependenciesTracker.Tests.Stubs;
+using System.Net;
+using DependenciesTracking.Tests.Stubs;
 using Xunit;
 
-namespace DependenciesTracker.Tests
+namespace DependenciesTracking.Tests
 {
     public class DependenciesTrackerLightTests
     {
@@ -134,7 +135,8 @@ namespace DependenciesTracker.Tests
         public void NotifyPropertyCollectionTest()
         {
             var map = new DependenciesMap<Invoice>();
-            map.AddMap(i => i.TotalCost, i => 0, i => i.Orders.EachElement().Price, i => i.Orders.EachElement().Quantity);
+            map.AddDependency(i => i.TotalCost, i => 0, i => DependenciesTracking.CollectionExtensions.EachElement(i.Orders).Price, 
+                                                        i => DependenciesTracking.CollectionExtensions.EachElement(i.Orders).Quantity);
 
             foreach (var mapItem in map.MapItems)
                 Debug.WriteLine(mapItem.ToString());

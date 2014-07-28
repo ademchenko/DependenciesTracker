@@ -7,8 +7,8 @@
     <ProjectGuid>{F92C9CF9-13B5-4586-B674-3D2187A82584}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>DependenciesTracker.Tests</RootNamespace>
-    <AssemblyName>DependenciesTracker.Tests</AssemblyName>
+    <RootNamespace>DependenciesTracking.Tests</RootNamespace>
+    <AssemblyName>DependenciesTracking.Tests</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
@@ -49,7 +49,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="DependenciesTrackerLightTests.cs" />
-    <Compile Include="DependentPropertyCalculationsTest.cs" />
+    <Compile Include="DependentPropertyCalculationTests.cs" />
     <Compile Include="PathBuildingTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Stubs\FlatOrder.cs" />
@@ -59,13 +59,13 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DependenciesTracker.Interfaces\DependenciesTracker.Interfaces.csproj">
+    <ProjectReference Include="..\DependenciesTracker.Interfaces\DependenciesTracking.Interfaces.csproj">
       <Project>{7550236a-c1bd-453d-b1a9-04f3801de307}</Project>
-      <Name>DependenciesTracker.Interfaces</Name>
+      <Name>DependenciesTracking.Interfaces</Name>
     </ProjectReference>
-    <ProjectReference Include="..\DependencyTracker\DependenciesTracker.csproj">
+    <ProjectReference Include="..\DependencyTracker\DependenciesTracking.csproj">
       <Project>{7e789c4f-029d-460f-9f77-f48757b76e7f}</Project>
-      <Name>DependenciesTracker</Name>
+      <Name>DependenciesTracking</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

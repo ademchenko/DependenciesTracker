@@ -1,7 +1,7 @@
 ﻿using System;
 using JetBrains.Annotations;
 
-namespace DependenciesTracker
+namespace DependenciesTracking
 {
     internal class PropertyPathItem<T> : PathItemBase<T>
     {

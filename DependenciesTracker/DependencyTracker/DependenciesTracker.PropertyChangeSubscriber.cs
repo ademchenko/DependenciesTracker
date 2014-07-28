@@ -9,7 +9,7 @@ using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using JetBrains.Annotations;
 
-namespace DependenciesTracker
+namespace DependenciesTracking
 {
     internal partial class DependenciesTracker<T>
     {

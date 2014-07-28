@@ -3,11 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.30501.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DependenciesTracker", "DependencyTracker\DependenciesTracker.csproj", "{7E789C4F-029D-460F-9F77-F48757B76E7F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DependenciesTracking", "DependencyTracker\DependenciesTracking.csproj", "{7E789C4F-029D-460F-9F77-F48757B76E7F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DependenciesTracker.Tests", "DependenciesTracker.Tests\DependenciesTracker.Tests.csproj", "{F92C9CF9-13B5-4586-B674-3D2187A82584}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DependenciesTracking.Tests", "DependenciesTracker.Tests\DependenciesTracking.Tests.csproj", "{F92C9CF9-13B5-4586-B674-3D2187A82584}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DependenciesTracker.Interfaces", "DependenciesTracker.Interfaces\DependenciesTracker.Interfaces.csproj", "{7550236A-C1BD-453D-B1A9-04F3801DE307}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DependenciesTracking.Interfaces", "DependenciesTracker.Interfaces\DependenciesTracking.Interfaces.csproj", "{7550236A-C1BD-453D-B1A9-04F3801DE307}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

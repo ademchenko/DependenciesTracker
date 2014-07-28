@@ -4,11 +4,11 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
-using DependenciesTracker.Interfaces;
+using DependenciesTracking.Interfaces;
 using JetBrains.Annotations;
 
 
-namespace DependenciesTracker
+namespace DependenciesTracking
 {
     public sealed class DependenciesMap<T> : IDependenciesMap<T>
     {
@@ -30,7 +30,7 @@ namespace DependenciesTracker
         }
 
         [NotNull]
-        public IDependenciesMap<T> AddMap<U>([NotNull] Action<T, U> setter, [NotNull] Func<T, U> calculator, Expression<Func<T, object>> obligatoryDependencyPath, [NotNull] params Expression<Func<T, object>>[] dependencyPaths)
+        public IDependenciesMap<T> AddDependency<U>([NotNull] Action<T, U> setter, [NotNull] Func<T, U> calculator, Expression<Func<T, object>> obligatoryDependencyPath, [NotNull] params Expression<Func<T, object>>[] dependencyPaths)
         {
             if (setter == null)
                 throw new ArgumentNullException("setter");
@@ -45,7 +45,7 @@ namespace DependenciesTracker
         }
 
         [NotNull]
-        public IDependenciesMap<T> AddMap<U>([NotNull] Expression<Func<T, U>> dependentProperty, [NotNull] Func<T, U> calculator,
+        public IDependenciesMap<T> AddDependency<U>([NotNull] Expression<Func<T, U>> dependentProperty, [NotNull] Func<T, U> calculator,
             [NotNull] Expression<Func<T, object>> obligatoryDependencyPath, [NotNull] params Expression<Func<T, object>>[] dependencyPaths)
         {
             if (dependentProperty == null)
@@ -53,7 +53,7 @@ namespace DependenciesTracker
             if (obligatoryDependencyPath == null)
                 throw new ArgumentNullException("obligatoryDependencyPath");
 
-            return AddMap(BuildSetter(dependentProperty), calculator, obligatoryDependencyPath, dependencyPaths);
+            return AddDependency(BuildSetter(dependentProperty), calculator, obligatoryDependencyPath, dependencyPaths);
         }
 
         [NotNull]

@@ -1,9 +1,9 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Runtime.Remoting.Messaging;
-using DependenciesTracker.Interfaces;
+using DependenciesTracking.Interfaces;
 
-namespace DependenciesTracker.Tests.Stubs
+namespace DependenciesTracking.Tests.Stubs
 {
     public class FlatOrder : INotifyPropertyChanged
     {
@@ -55,7 +55,7 @@ namespace DependenciesTracker.Tests.Stubs
 
         static FlatOrder()
         {
-            _dependenciesMap.AddMap(o => o.Cost, o => o.Price * o.Quantity, o => o.Price, o => o.Quantity);
+            _dependenciesMap.AddDependency(o => o.Cost, o => o.Price * o.Quantity, o => o.Price, o => o.Quantity);
         }
 
         public FlatOrder()

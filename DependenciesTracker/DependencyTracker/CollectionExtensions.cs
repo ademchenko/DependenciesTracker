@@ -4,7 +4,7 @@ using System.Linq.Expressions;
 using System.Reflection;
 using JetBrains.Annotations;
 
-namespace DependenciesTracker
+namespace DependenciesTracking
 {
     public static class CollectionExtensions
     {

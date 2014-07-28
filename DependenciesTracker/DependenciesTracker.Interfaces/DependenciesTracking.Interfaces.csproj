@@ -8,12 +8,12 @@
     <ProjectGuid>{7550236A-C1BD-453D-B1A9-04F3801DE307}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>DependenciesTracker.Interfaces</RootNamespace>
-    <AssemblyName>DependenciesTracker.Interfaces</AssemblyName>
+    <RootNamespace>DependenciesTracking.Interfaces</RootNamespace>
+    <AssemblyName>DependenciesTracking.Interfaces</AssemblyName>
     <DefaultLanguage>en-US</DefaultLanguage>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{786C830F-07A1-408B-BD7F-6EE04809D6DB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
-    <TargetFrameworkProfile>Profile14</TargetFrameworkProfile>
+    <TargetFrameworkProfile>Profile328</TargetFrameworkProfile>
     <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">

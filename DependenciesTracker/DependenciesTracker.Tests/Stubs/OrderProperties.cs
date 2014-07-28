@@ -2,10 +2,10 @@ using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
-using DependenciesTracker.Interfaces;
+using DependenciesTracking.Interfaces;
 using JetBrains.Annotations;
 
-namespace DependenciesTracker.Tests.Stubs
+namespace DependenciesTracking.Tests.Stubs
 {
     public class Order : INotifyPropertyChanged
     {
@@ -72,9 +72,9 @@ namespace DependenciesTracker.Tests.Stubs
 
         static Order()
         {
-            _map.AddMap(o => o.OrderLine, BuildOrderLine, o => o.Properties.Category, o => o.Properties.Price, o => o.Properties.Quantity)
-                .AddMap(o => o.TotalCost, o => o.Properties != null ? o.Properties.Price * o.Properties.Quantity : -1, o => o.Properties.Price, o => o.Properties.Quantity)
-                .AddMap(o => o.ShortOrderLine, o => o.TotalCost == -1 ? "ShortOrderLine is empty" : string.Format("Order has total cost = {0}", o.TotalCost), o => o.TotalCost);
+            _map.AddDependency(o => o.OrderLine, BuildOrderLine, o => o.Properties.Category, o => o.Properties.Price, o => o.Properties.Quantity)
+                .AddDependency(o => o.TotalCost, o => o.Properties != null ? o.Properties.Price * o.Properties.Quantity : -1, o => o.Properties.Price, o => o.Properties.Quantity)
+                .AddDependency(o => o.ShortOrderLine, o => o.TotalCost == -1 ? "ShortOrderLine is empty" : string.Format("Order has total cost = {0}", o.TotalCost), o => o.TotalCost);
 
         }
 
@@ -189,8 +189,9 @@ namespace DependenciesTracker.Tests.Stubs
 
         static Invoice()
         {
-            _dependenciesMap.AddMap(i => i.TotalCost, i => i.Orders == null ? -1 : i.Orders.Sum(o => o.Price * o.Quantity),
-                i => i.Orders.EachElement().Price, i => i.Orders.EachElement().Quantity);
+            _dependenciesMap.AddDependency(i => i.TotalCost, i => i.Orders == null ? -1 : i.Orders.Sum(o => o.Price * o.Quantity),
+                                i => DependenciesTracking.CollectionExtensions.EachElement(i.Orders).Price, 
+                                i => DependenciesTracking.CollectionExtensions.EachElement(i.Orders).Quantity);
         }
 
         public Invoice()

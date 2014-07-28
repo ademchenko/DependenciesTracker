@@ -6,7 +6,7 @@ using System.Linq.Expressions;
 using Xunit;
 using Xunit.Extensions;
 
-namespace DependenciesTracker.Tests.PathBuilding
+namespace DependenciesTracking.Tests
 {
     public interface IPathBuildingTestClass
     {
@@ -99,11 +99,11 @@ namespace DependenciesTracker.Tests.PathBuilding
         static PathBuildingTestClassWithPrivatePropertiesAndFields()
         {
             PropertiesDependenciesMap = new DependenciesMap<PathBuildingTestClassWithPrivatePropertiesAndFields>();
-            PropertiesDependenciesMap.AddMap(o => o._costProperty, o => o._priceProperty * o._quantityProperty, o => o._priceProperty,
+            PropertiesDependenciesMap.AddDependency(o => o._costProperty, o => o._priceProperty * o._quantityProperty, o => o._priceProperty,
                             o => o._quantityProperty);
 
             FieldsDependenciesMap = new DependenciesMap<PathBuildingTestClassWithPrivatePropertiesAndFields>();
-            FieldsDependenciesMap.AddMap(o => o._costField, o => o._priceField * o._quantityField, o => o._priceField,
+            FieldsDependenciesMap.AddDependency(o => o._costField, o => o._priceField * o._quantityField, o => o._priceField,
                             o => o._quantityField);
         }
 
@@ -191,7 +191,7 @@ namespace DependenciesTracker.Tests.PathBuilding
             var map = new DependenciesMap<PathBuildingTestClass>();
 
             Assert.Throws<NotSupportedException>(() =>
-                map.AddMap(o => o.DependentProperty, o => -1, path));
+                map.AddDependency(o => o.DependentProperty, o => -1, path));
         }
 
         [Fact(Skip = "Issue #7 is created. It's a low priority issue and won't be fixed in Release 1.")]
@@ -199,8 +199,8 @@ namespace DependenciesTracker.Tests.PathBuilding
         {
             var map = new DependenciesMap<PathBuildingTestClass>();
             Assert.Throws<InvalidOperationException>(() => 
-                map.AddMap(o => o.DependentProperty, o => -1, o => o.IntProperty)
-                   .AddMap(o => o.DependentProperty, o => -2, o => o.StringProperty)
+                map.AddDependency(o => o.DependentProperty, o => -1, o => o.IntProperty)
+                   .AddDependency(o => o.DependentProperty, o => -2, o => o.StringProperty)
                 );
         }
 
@@ -239,14 +239,14 @@ namespace DependenciesTracker.Tests.PathBuilding
                 //Explicit conversion of "EachElement" call on collection of reference type elements
                 yield return new object[]
                 {
-                    (Expression<Func<PathBuildingTestClass, object>>) (o => (object) DependenciesTracker.CollectionExtensions.EachElement(o.Ints)),
+                    (Expression<Func<PathBuildingTestClass, object>>) (o => (object) DependenciesTracking.CollectionExtensions.EachElement(o.Ints)),
                     new[] {"root", "Ints", "CollectionItem"}
                 };
 
                 //Implicit conversion of "EachElement" call on collection of value type elements
                 yield return new object[]
                 {
-                    (Expression<Func<PathBuildingTestClass, object>>) (o => (object) DependenciesTracker.CollectionExtensions.EachElement(o.Ints)),
+                    (Expression<Func<PathBuildingTestClass, object>>) (o => (object) DependenciesTracking.CollectionExtensions.EachElement(o.Ints)),
                     new[] {"root", "Ints", "CollectionItem"}
                 };
             }
@@ -422,21 +422,21 @@ namespace DependenciesTracker.Tests.PathBuilding
                 //Property chain with collection item of reference type
                 yield return new object[]
                 {
-                    (Expression<Func<PathBuildingTestClass, object>>)(o => DependenciesTracker.CollectionExtensions.EachElement(o.Strings)),
+                    (Expression<Func<PathBuildingTestClass, object>>)(o => DependenciesTracking.CollectionExtensions.EachElement(o.Strings)),
                     new[] {"root", "Strings", "CollectionItem"}
                 };
 
                 //Property chain with collection item of value type in the end of chain
                 yield return new object[]
                 {
-                    (Expression<Func<PathBuildingTestClass, object>>)(o => DependenciesTracker.CollectionExtensions.EachElement(o.Ints)),
+                    (Expression<Func<PathBuildingTestClass, object>>)(o => DependenciesTracking.CollectionExtensions.EachElement(o.Ints)),
                     new[] {"root", "Ints", "CollectionItem"}
                 };
 
                 //Property chain with collection item in the middle of chain
                 yield return new object[]
                 {
-                    (Expression<Func<PathBuildingTestClass, object>>)(o => DependenciesTracker.CollectionExtensions.EachElement(o.Strings).Length),
+                    (Expression<Func<PathBuildingTestClass, object>>)(o => DependenciesTracking.CollectionExtensions.EachElement(o.Strings).Length),
                     new[] {"root", "Strings", "CollectionItem", "Length"}
                 };
 
@@ -444,7 +444,7 @@ namespace DependenciesTracker.Tests.PathBuilding
                 yield return new object[]
                 {
                     (Expression<Func<PathBuildingTestClass, object>>)(
-                        o => DependenciesTracker.CollectionExtensions.EachElement(DependenciesTracker.CollectionExtensions.EachElement(o.StringLists)).Length),
+                        o => DependenciesTracking.CollectionExtensions.EachElement(DependenciesTracking.CollectionExtensions.EachElement(o.StringLists)).Length),
                     new[] {"root", "StringLists", "CollectionItem","CollectionItem", "Length"}
                 };
 
@@ -452,7 +452,7 @@ namespace DependenciesTracker.Tests.PathBuilding
                 yield return new object[]
                 {
                     (Expression<Func<PathBuildingTestClass, object>>)(
-                        o => DependenciesTracker.CollectionExtensions.EachElement(DependenciesTracker.CollectionExtensions.EachElement(o.IntLists))),
+                        o => DependenciesTracking.CollectionExtensions.EachElement(DependenciesTracking.CollectionExtensions.EachElement(o.IntLists))),
                     new[] {"root", "IntLists", "CollectionItem", "CollectionItem"}
                 };
             }
@@ -471,7 +471,7 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void AddDependency_PropertyChainWithCollectionItemAtTheBegginning_Supported()
         {
             var map = new DependenciesMap<PathBuildingCollectionTestClass<string>>();
-            map.AddMap(o => o.IntProperty, o => -1, o => DependenciesTracker.CollectionExtensions.EachElement(o));
+            map.AddDependency(o => o.IntProperty, o => -1, o => DependenciesTracking.CollectionExtensions.EachElement(o));
 
             Assert.Equal(new[] { "root", "CollectionItem" }, map.MapItems.Single().PathStrings);
         }
@@ -481,7 +481,7 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void AddDependency_PropertyChainWithCollectionItemAtTheBegginningAndPropertyInTheEnd_Supported()
         {
             var map = new DependenciesMap<PathBuildingCollectionTestClass<string>>();
-            map.AddMap(o => o.IntProperty, o => -1, o => DependenciesTracker.CollectionExtensions.EachElement(o).Length);
+            map.AddDependency(o => o.IntProperty, o => -1, o => DependenciesTracking.CollectionExtensions.EachElement(o).Length);
 
             Assert.Equal(new[] { "root", "CollectionItem", "Length" }, map.MapItems.Single().PathStrings);
         }
@@ -491,7 +491,7 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void AddDependency_PropertyChainWithCollectionItemOfCollectionItemAtTheBegginning_Supported()
         {
             var map = new DependenciesMap<PathBuildingCollectionTestClass<List<string>>>();
-            map.AddMap(o => o.IntProperty, o => -1, o => DependenciesTracker.CollectionExtensions.EachElement(DependenciesTracker.CollectionExtensions.EachElement(o)));
+            map.AddDependency(o => o.IntProperty, o => -1, o => DependenciesTracking.CollectionExtensions.EachElement(DependenciesTracking.CollectionExtensions.EachElement(o)));
 
             Assert.Equal(new[] { "root", "CollectionItem", "CollectionItem" }, map.MapItems.Single().PathStrings);
         }
@@ -500,7 +500,7 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void AddDependency_PropertyChainWithCollectionItemOfCollectionItemAtTheBegginningAndPropertyInTheEnd_Supported()
         {
             var map = new DependenciesMap<PathBuildingCollectionTestClass<List<string>>>();
-            map.AddMap(o => o.IntProperty, o => -1, o => DependenciesTracker.CollectionExtensions.EachElement(DependenciesTracker.CollectionExtensions.EachElement(o)).Length);
+            map.AddDependency(o => o.IntProperty, o => -1, o => DependenciesTracking.CollectionExtensions.EachElement(DependenciesTracking.CollectionExtensions.EachElement(o)).Length);
 
             Assert.Equal(new[] { "root", "CollectionItem", "CollectionItem", "Length" }, map.MapItems.Single().PathStrings);
         }
@@ -601,7 +601,7 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void AddDependency_OneLevelRefTypePropertyGetter_Success()
         {
             var map = new DependenciesMap<PathBuildingTestClass>();
-            map.AddMap(o => o.DependentProperty, o => -1, o => o.IntProperty);
+            map.AddDependency(o => o.DependentProperty, o => -1, o => o.IntProperty);
 
             var obj = new PathBuildingTestClass();
             var intPropertyExpectedValue = new Random().Next(100, 200);
@@ -618,7 +618,7 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void AddDependency_OneLevelValTypePropertyGetter_Success()
         {
             var map = new DependenciesMap<PathBuildingTestClass>();
-            map.AddMap(o => o.DependentProperty, o => -1, o => o.StringProperty);
+            map.AddDependency(o => o.DependentProperty, o => -1, o => o.StringProperty);
 
             var obj = new PathBuildingTestClass();
             var stringPropertyExpectedValue = Guid.NewGuid().ToString();
@@ -635,7 +635,7 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void AddDependency_OneLevelRefTypeFieldGetter_Success()
         {
             var map = new DependenciesMap<PathBuildingTestClass>();
-            map.AddMap(o => o.DependentProperty, o => -1, o => o.IntField);
+            map.AddDependency(o => o.DependentProperty, o => -1, o => o.IntField);
 
             var obj = new PathBuildingTestClass();
             var intFieldExpectedValue = new Random().Next(100, 200);
@@ -652,7 +652,7 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void AddDependency_OneLevelValTypeFieldGetter_Success()
         {
             var map = new DependenciesMap<PathBuildingTestClass>();
-            map.AddMap(o => o.DependentProperty, o => -1, o => o.StringField);
+            map.AddDependency(o => o.DependentProperty, o => -1, o => o.StringField);
 
             var obj = new PathBuildingTestClass();
             var stringFieldExpectedValue = Guid.NewGuid().ToString();
@@ -669,7 +669,7 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void AddDependency_SecondLevelPropertyGetter_Success()
         {
             var map = new DependenciesMap<PathBuildingTestClass>();
-            map.AddMap(o => o.DependentProperty, o => -1, o => o.InnerProperty.IntProperty);
+            map.AddDependency(o => o.DependentProperty, o => -1, o => o.InnerProperty.IntProperty);
 
             var obj = new PathBuildingTestClass();
 
@@ -690,7 +690,7 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void AddDependency_CollectionElementAtTheBeginningOfThePathPropertyGetter_Success()
         {
             var map = new DependenciesMap<PathBuildingCollectionTestClass<string>>();
-            map.AddMap(o => o.IntProperty, o => -1, o => DependenciesTracker.CollectionExtensions.EachElement(o).Length);
+            map.AddDependency(o => o.IntProperty, o => -1, o => DependenciesTracking.CollectionExtensions.EachElement(o).Length);
 
             var expectedStringLength = new Random().Next(1, 10);
             var obj = new string('a', expectedStringLength);
@@ -709,7 +709,7 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void AddDependency_CollectionElementOfPropertyPropertyGetter_Success()
         {
             var map = new DependenciesMap<PathBuildingTestClass>();
-            map.AddMap(o => o.DependentProperty, o => -1, o => DependenciesTracker.CollectionExtensions.EachElement(o.Strings).Length);
+            map.AddDependency(o => o.DependentProperty, o => -1, o => DependenciesTracking.CollectionExtensions.EachElement(o.Strings).Length);
 
             var rootPathItem = map.MapItems.Single();
             Assert.Equal("root", rootPathItem.PathStrings.First());
@@ -741,8 +741,8 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void AddDependency_CollectionElementOfCollectionElementOfPropertyPropertyGetter_Success()
         {
             var map = new DependenciesMap<PathBuildingTestClass>();
-            map.AddMap(o => o.DependentProperty, o => -1, 
-                o => DependenciesTracker.CollectionExtensions.EachElement(DependenciesTracker.CollectionExtensions.EachElement(o.StringLists)).Length);
+            map.AddDependency(o => o.DependentProperty, o => -1, 
+                o => DependenciesTracking.CollectionExtensions.EachElement(DependenciesTracking.CollectionExtensions.EachElement(o.StringLists)).Length);
 
             var rootPathItem = map.MapItems.Single();
             Assert.Equal("root", rootPathItem.PathStrings.First());
@@ -788,8 +788,8 @@ namespace DependenciesTracker.Tests.PathBuilding
             var map = new DependenciesMap<PathBuildingTestClass>();
 
             //Alexander Demchenko: Actually ArgumentException is raised by an internal method
-            //of Expression.Assign implementation, so not by argument checks of AddMap, but it's enough for now
-            Assert.Throws<ArgumentException>(() => map.AddMap(dependentPropertyExpression, o => -1, o => o.IntProperty));
+            //of Expression.Assign implementation, so not by argument checks of AddDependency, but it's enough for now
+            Assert.Throws<ArgumentException>(() => map.AddDependency(dependentPropertyExpression, o => -1, o => o.IntProperty));
         }
 
         /// <summary>
@@ -811,42 +811,42 @@ namespace DependenciesTracker.Tests.PathBuilding
             Expression<Func<PathBuildingTestClass, int>> dependentPropertyExpression)
         {
             var map = new DependenciesMap<PathBuildingTestClass>();
-            Assert.Throws<NotSupportedException>(() => map.AddMap(dependentPropertyExpression, o => -1, o => o.IntProperty));
+            Assert.Throws<NotSupportedException>(() => map.AddDependency(dependentPropertyExpression, o => -1, o => o.IntProperty));
         }
 
         [Fact]
         public void AddDependency_DependentPropertyOrField_Conversions_NotSupported_1()
         {
             var map = new DependenciesMap<PathBuildingTestClass>();
-            Assert.Throws<NotSupportedException>(() => map.AddMap<object>(o => o.DependentProperty, o => -1, o => o.IntProperty));
+            Assert.Throws<NotSupportedException>(() => map.AddDependency<object>(o => o.DependentProperty, o => -1, o => o.IntProperty));
         }
 
         [Fact]
         public void AddDependency_DependentPropertyOrField_Conversions_NotSupported_2()
         {
             var map = new DependenciesMap<PathBuildingTestClass>();
-            Assert.Throws<NotSupportedException>(() => map.AddMap(o => (int)o.ObjectDependentProperty, o => -1, o => o.IntProperty));
+            Assert.Throws<NotSupportedException>(() => map.AddDependency(o => (int)o.ObjectDependentProperty, o => -1, o => o.IntProperty));
         }
 
         [Fact]
         public void AddDependency_DependentPropertyOrField_InstanceMethodCalls_NotSupported()
         {
             var map = new DependenciesMap<PathBuildingTestClass>();
-            Assert.Throws<NotSupportedException>(() => map.AddMap(o => o.DependentProperty.ToString(), o => "-1", o => o.IntProperty));
+            Assert.Throws<NotSupportedException>(() => map.AddDependency(o => o.DependentProperty.ToString(), o => "-1", o => o.IntProperty));
         }
 
         [Fact]
         public void AddDependency_DependentPropertyOrField_ExtensionMethodCalls_NotSupported()
         {
             var map = new DependenciesMap<PathBuildingTestClass>();
-            Assert.Throws<NotSupportedException>(() => map.AddMap(o => o.DependentProperty.ExtensionCall(), o => "-1", o => o.IntProperty));
+            Assert.Throws<NotSupportedException>(() => map.AddDependency(o => o.DependentProperty.ExtensionCall(), o => "-1", o => o.IntProperty));
         }
 
         private static void SupportedPathsTestImpl(Expression<Func<PathBuildingTestClass, object>> path, string[] expectedParseResult)
         {
             var map = new DependenciesMap<PathBuildingTestClass>();
 
-            map.AddMap(o => o.DependentProperty, o => -1, path);
+            map.AddDependency(o => o.DependentProperty, o => -1, path);
 
             Assert.Equal(expectedParseResult, map.MapItems.Single().PathStrings);
         }

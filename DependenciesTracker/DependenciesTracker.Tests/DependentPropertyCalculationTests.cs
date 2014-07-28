@@ -8,7 +8,7 @@ using System.Linq;
 using JetBrains.Annotations;
 using Xunit;
 
-namespace DependenciesTracker.Tests.PathBuilding
+namespace DependenciesTracking.Tests
 {
     //NOTE: All test class setters do not have a checking for an equality before an actual value setting to precisely record count of setting attempts
 
@@ -303,7 +303,7 @@ namespace DependenciesTracker.Tests.PathBuilding
     }
 
 
-    public class DependentPropertyCalculationsTest
+    public class DependentPropertyCalculationTests
     {
         [NotNull]
         private static readonly Random _random = new Random();
@@ -312,7 +312,7 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void Init_SimpleValueTypePropertyDependency()
         {
             var dependencyMap = new DependenciesMap<TestOrder>()
-                .AddMap(o => o.Cost, o => 2 * o.Quantity, o => o.Quantity);
+                .AddDependency(o => o.Cost, o => 2 * o.Quantity, o => o.Quantity);
 
             var price = _random.Next(1, 100);
             var quantity = _random.Next(100, 200);
@@ -339,7 +339,7 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void Init_SimpleRefTypeNotNullPropertyDependency()
         {
             var dependencyMap = new DependenciesMap<TestOrder>()
-                .AddMap(o => o.ClientShortDescription, o => string.Format("Client: {0}", o.ClientFirstName),
+                .AddDependency(o => o.ClientShortDescription, o => string.Format("Client: {0}", o.ClientFirstName),
                     o => o.ClientFirstName);
 
             var firstName = Guid.NewGuid().ToString();
@@ -368,7 +368,7 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void Init_SimpleRefTypeNullPropertyDependency()
         {
             var dependencyMap = new DependenciesMap<TestOrder>()
-                .AddMap(o => o.ClientShortDescription,
+                .AddDependency(o => o.ClientShortDescription,
                     o => o.ClientFirstName == null ? "Client: undefined" : "Client: defined", o => o.ClientFirstName);
 
             var lastName = Guid.NewGuid().ToString();
@@ -396,7 +396,7 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void Init_SimpleValueTypePropertiesDependency()
         {
             var dependencyMap = new DependenciesMap<TestOrder>()
-                .AddMap(o => o.Cost, o => o.Price * o.Quantity, o => o.Quantity, o => o.Price);
+                .AddDependency(o => o.Cost, o => o.Price * o.Quantity, o => o.Quantity, o => o.Price);
 
             var price = _random.Next(1, 100);
             var quantity = _random.Next(100, 200);
@@ -428,7 +428,7 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void Init_SimpleValueTypePropertiesDependency_Issue6()
         {
             var dependencyMap = new DependenciesMap<TestOrder>()
-                .AddMap(o => o.Cost, o => o.Price * o.Quantity, o => o.Quantity, o => o.Price);
+                .AddDependency(o => o.Cost, o => o.Price * o.Quantity, o => o.Quantity, o => o.Price);
 
             var price = _random.Next(1, 100);
             var quantity = _random.Next(100, 200);
@@ -456,7 +456,7 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void Init_SimpleRefTypePropertiesDependency_NullAndNotNullProperty()
         {
             var dependencyMap = new DependenciesMap<TestOrder>()
-                .AddMap(o => o.ClientFullDescription, o => string.Format("Client: {0} {1}", o.ClientFirstName,
+                .AddDependency(o => o.ClientFullDescription, o => string.Format("Client: {0} {1}", o.ClientFirstName,
                     o.ClientLastName ?? "undefined"), o => o.ClientFirstName, o => o.ClientLastName);
 
             var firstName = Guid.NewGuid().ToString();
@@ -486,7 +486,7 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void Init_SimpleRefTypePropertiesDependency_NullAndNotNullProperty_Issue6()
         {
             var dependencyMap = new DependenciesMap<TestOrder>()
-                .AddMap(o => o.ClientFullDescription, o => string.Format("Client: {0} {1}", o.ClientFirstName,
+                .AddDependency(o => o.ClientFullDescription, o => string.Format("Client: {0} {1}", o.ClientFirstName,
                     o.ClientLastName ?? "undefined"), o => o.ClientFirstName, o => o.ClientLastName);
 
             var firstName = Guid.NewGuid().ToString();
@@ -513,7 +513,7 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void Init_SimplePropertyChainDependency_NullPropertyValueInTheMiddleOfChain()
         {
             var dependencyMap = new DependenciesMap<TestOrder>()
-                .AddMap(o => o.ChildItemDoubledPrice,
+                .AddDependency(o => o.ChildItemDoubledPrice,
                     o => o.ChildItem == null ? -1 : 2 * o.ChildItem.Price, o => o.ChildItem.Price);
 
             var order = new TestOrder();
@@ -539,7 +539,7 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void Init_SimplePropertyChainDependency_NotNullPropertyChain()
         {
             var dependencyMap = new DependenciesMap<TestOrder>()
-                .AddMap(o => o.ChildItemDoubledPrice,
+                .AddDependency(o => o.ChildItemDoubledPrice,
                     o => o.ChildItem == null ? -1 : 2 * o.ChildItem.Price, o => o.ChildItem.Price);
 
             var childItemPrice = _random.Next(1, 100);
@@ -567,7 +567,7 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void Init_SimplePropertyChainDependency_CollectionLengthProperty()
         {
             var dependencyMap = new DependenciesMap<TestOrder>()
-                .AddMap(o => o.ChildItemsCollectionDoubledLength, o => o.ChildItems == null ? -1 : 2 * o.ChildItems.Count,
+                .AddDependency(o => o.ChildItemsCollectionDoubledLength, o => o.ChildItems == null ? -1 : 2 * o.ChildItems.Count,
                     o => o.ChildItems.Count);
 
             var order = new TestOrder
@@ -602,8 +602,8 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void Init_CollectionAsAProperty_EachElementAtTheEnd()
         {
             var dependencyMap = new DependenciesMap<TestOrder>()
-                .AddMap(o => o.ChildItemsCollectionDoubledLength, o => o.ChildItems == null ? -1 : 2 * o.ChildItems.Count,
-                    o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems));
+                .AddDependency(o => o.ChildItemsCollectionDoubledLength, o => o.ChildItems == null ? -1 : 2 * o.ChildItems.Count,
+                    o => DependenciesTracking.CollectionExtensions.EachElement(o.ChildItems));
 
             var order = new TestOrder
             {
@@ -638,8 +638,8 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void Init_CollectionAsARoot_EachElementAtTheEnd()
         {
             var dependencyMap = new DependenciesMap<TestOrderItemsCollection>()
-                .AddMap(o => o.DoubledItemsCount, o => 2 * o.Count,
-                    o => DependenciesTracker.CollectionExtensions.EachElement(o));
+                .AddDependency(o => o.DoubledItemsCount, o => 2 * o.Count,
+                    o => DependenciesTracking.CollectionExtensions.EachElement(o));
 
             var orderItems = new TestOrderItemsCollection
             {
@@ -670,9 +670,9 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void Init_CollectionAsARoot_EachElement_ValTypeProperty()
         {
             var dependencyMap = new DependenciesMap<TestOrderItemsCollection>()
-                .AddMap(o => o.TotalCost, o => o.Sum(i => i.Price * i.Quantity),
-                    o => DependenciesTracker.CollectionExtensions.EachElement(o).Quantity,
-                    o => DependenciesTracker.CollectionExtensions.EachElement(o).Quantity);
+                .AddDependency(o => o.TotalCost, o => o.Sum(i => i.Price * i.Quantity),
+                    o => DependenciesTracking.CollectionExtensions.EachElement(o).Quantity,
+                    o => DependenciesTracking.CollectionExtensions.EachElement(o).Quantity);
 
             var orderItem1Price = _random.Next(0, 10);
             var orderItem1Quantity = _random.Next(0, 10);
@@ -714,9 +714,9 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void Init_CollectionAsARoot_EachElement_ValTypeProperty_Issue6()
         {
             var dependencyMap = new DependenciesMap<TestOrderItemsCollection>()
-                .AddMap(o => o.TotalCost, o => o.Sum(i => i.Price * i.Quantity),
-                    o => DependenciesTracker.CollectionExtensions.EachElement(o).Quantity,
-                    o => DependenciesTracker.CollectionExtensions.EachElement(o).Quantity);
+                .AddDependency(o => o.TotalCost, o => o.Sum(i => i.Price * i.Quantity),
+                    o => DependenciesTracking.CollectionExtensions.EachElement(o).Quantity,
+                    o => DependenciesTracking.CollectionExtensions.EachElement(o).Quantity);
 
             var orderItem1Price = _random.Next(0, 10);
             var orderItem1Quantity = _random.Next(0, 10);
@@ -758,10 +758,10 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void Init_CollectionAsAProperty_EachElement_ValTypeProperty()
         {
             var dependencyMap = new DependenciesMap<TestOrder>()
-                .AddMap(o => o.ChildItemsTotalCost, o => o.ChildItems.Sum(i => i.Price * i.Quantity)
+                .AddDependency(o => o.ChildItemsTotalCost, o => o.ChildItems.Sum(i => i.Price * i.Quantity)
                                                          + (o.ChildItem == null ? 0 : o.ChildItem.Price * o.ChildItem.Quantity),
-                    o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Price,
-                    o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Quantity,
+                    o => DependenciesTracking.CollectionExtensions.EachElement(o.ChildItems).Price,
+                    o => DependenciesTracking.CollectionExtensions.EachElement(o.ChildItems).Quantity,
                     o => o.ChildItem);
 
             var childItemPrice = _random.Next(0, 10);
@@ -809,13 +809,13 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void Init_CollectionAsAProperty_EachElement_ValTypeProperty_Issue6()
         {
             var dependencyMap = new DependenciesMap<TestOrder>()
-                .AddMap(o => o.ChildItemsTotalCost, o => o.ChildItems.Sum(i => i.Price * i.Quantity)
+                .AddDependency(o => o.ChildItemsTotalCost, o => o.ChildItems.Sum(i => i.Price * i.Quantity)
                                                          +
                                                          (o.ChildItem == null
                                                              ? 0
                                                              : o.ChildItem.Price * o.ChildItem.Quantity),
-                    o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Price,
-                    o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Quantity,
+                    o => DependenciesTracking.CollectionExtensions.EachElement(o.ChildItems).Price,
+                    o => DependenciesTracking.CollectionExtensions.EachElement(o.ChildItems).Quantity,
                     o => o.ChildItem);
 
             var childItemPrice = _random.Next(0, 10);
@@ -863,9 +863,9 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void CollectionAsAProperty_EachElement_EachElement()
         {
             var dependencyMap = new DependenciesMap<TestOrder>()
-                .AddMap(o => o.UnalignedIntMatrixElementsTotalSum, o => o.UnalignedIntMatrix.Sum(i => i.Sum()),
-                    o => DependenciesTracker.CollectionExtensions.EachElement(
-                        DependenciesTracker.CollectionExtensions.EachElement(o.UnalignedIntMatrix)));
+                .AddDependency(o => o.UnalignedIntMatrixElementsTotalSum, o => o.UnalignedIntMatrix.Sum(i => i.Sum()),
+                    o => DependenciesTracking.CollectionExtensions.EachElement(
+                        DependenciesTracking.CollectionExtensions.EachElement(o.UnalignedIntMatrix)));
 
             var unalignedIntMatrixElementsTotalSumPropertyChangeRaiseCount = 0;
 
@@ -907,10 +907,10 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void CollectionAsAProperty_EachElement_EachElement_ValTypeProperty()
         {
             var dependencyMap = new DependenciesMap<TestOrder>()
-                .AddMap(o => o.MaxLengthStringInUnalignedStringMatrix,
+                .AddDependency(o => o.MaxLengthStringInUnalignedStringMatrix,
                         o => o.UnalignedStringMatrix.SelectMany(c => c).Single(i => i.Length == o.UnalignedStringMatrix.SelectMany(item => item).Max(item => item.Length)),
-                        o => DependenciesTracker.CollectionExtensions.EachElement(
-                                    DependenciesTracker.CollectionExtensions.EachElement(o.UnalignedIntMatrix)));
+                        o => DependenciesTracking.CollectionExtensions.EachElement(
+                                    DependenciesTracking.CollectionExtensions.EachElement(o.UnalignedIntMatrix)));
 
             var maxLengthStringInUnalignedStringMatrixPropertyChangeRaiseCount = 0;
 
@@ -955,8 +955,8 @@ namespace DependenciesTracker.Tests.PathBuilding
             //But reverse order of adding maps shows several initialization assignments of the second property which is wrong
             //and is kind of issue#6 observation. See the Init_DependentOfDependentPropertyIsBeingCalculatedOnSourcePropertyChange_ReverseOrderOfAddingMaps test.
             var dependencyMap = new DependenciesMap<TestOrder>()
-                                    .AddMap(o => o.Cost, o => o.Price * o.Quantity, o => o.Price, o => o.Quantity)
-                                    .AddMap(o => o.CostWithDiscount, o => 0.9m * o.Cost, o => o.Cost);
+                                    .AddDependency(o => o.Cost, o => o.Price * o.Quantity, o => o.Price, o => o.Quantity)
+                                    .AddDependency(o => o.CostWithDiscount, o => 0.9m * o.Cost, o => o.Cost);
 
 
             var price = _random.Next(1, 10);
@@ -990,8 +990,8 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void Init_DependentOfDependentPropertyIsBeingCalculatedOnSourcePropertyChange_ReverseOrderOfAddingMaps()
         {
             var dependencyMap = new DependenciesMap<TestOrder>()
-                                    .AddMap(o => o.CostWithDiscount, o => 0.9m * o.Cost, o => o.Cost)
-                                    .AddMap(o => o.Cost, o => o.Price * o.Quantity, o => o.Price, o => o.Quantity);
+                                    .AddDependency(o => o.CostWithDiscount, o => 0.9m * o.Cost, o => o.Cost)
+                                    .AddDependency(o => o.Cost, o => o.Price * o.Quantity, o => o.Price, o => o.Quantity);
 
 
             var price = _random.Next(1, 10);
@@ -1026,8 +1026,8 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void Init_DependentOfDependentPropertyIsBeingCalculatedOnSourcePropertyChange_ReverseOrderOfAddingMaps_Issue6()
         {
             var dependencyMap = new DependenciesMap<TestOrder>()
-                                    .AddMap(o => o.CostWithDiscount, o => 0.9m * o.Cost, o => o.Cost)
-                                    .AddMap(o => o.Cost, o => o.Price * o.Quantity, o => o.Price, o => o.Quantity);
+                                    .AddDependency(o => o.CostWithDiscount, o => 0.9m * o.Cost, o => o.Cost)
+                                    .AddDependency(o => o.Cost, o => o.Price * o.Quantity, o => o.Price, o => o.Quantity);
 
             var price = _random.Next(1, 10);
             var quantity = _random.Next(1, 10);
@@ -1060,7 +1060,7 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void SimpleProperty_Change()
         {
             var dependencyMap = new DependenciesMap<TestOrder>()
-                                      .AddMap(o => o.Cost, o => o.Price * o.Quantity, o => o.Price, o => o.Quantity);
+                                      .AddDependency(o => o.Cost, o => o.Price * o.Quantity, o => o.Price, o => o.Quantity);
 
             var price = _random.Next(1, 10);
             var quantity = _random.Next(10, 20);
@@ -1091,7 +1091,7 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void SimplePropertyChain_ChangeOfLeafProperty()
         {
             var dependencyMap = new DependenciesMap<TestOrder>()
-                                        .AddMap(o => o.ChildItemDoubledPrice, o => o.ChildItem == null ? -1 : 2 * o.ChildItem.Price, o => o.ChildItem.Price);
+                                        .AddDependency(o => o.ChildItemDoubledPrice, o => o.ChildItem == null ? -1 : 2 * o.ChildItem.Price, o => o.ChildItem.Price);
 
             var priceOnLeafChange = _random.Next(1, 10);
 
@@ -1123,7 +1123,7 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void SimplePropertyChain_ChangeOfInnerProperty()
         {
             var dependencyMap = new DependenciesMap<TestOrder>()
-                                        .AddMap(o => o.ChildItemDoubledPrice, o => o.ChildItem == null ? -1 : 2 * o.ChildItem.Price, o => o.ChildItem.Price);
+                                        .AddDependency(o => o.ChildItemDoubledPrice, o => o.ChildItem == null ? -1 : 2 * o.ChildItem.Price, o => o.ChildItem.Price);
 
             var initialChildItemPrice = _random.Next(1, 10);
             var priceOnChildItemChange = _random.Next(1, 10);
@@ -1156,7 +1156,7 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void SimplePropertyChain_ChangeOfLeafAndInnerProperty()
         {
             var dependencyMap = new DependenciesMap<TestOrder>()
-                                        .AddMap(o => o.ChildItemDoubledPrice, o => o.ChildItem == null ? -1 : 2 * o.ChildItem.Price, o => o.ChildItem.Price);
+                                        .AddDependency(o => o.ChildItemDoubledPrice, o => o.ChildItem == null ? -1 : 2 * o.ChildItem.Price, o => o.ChildItem.Price);
 
             var priceOnMiddleChange = _random.Next(1, 10);
             var priceOnLeafChange = _random.Next(1, 10);
@@ -1205,7 +1205,7 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void SimplePropertyChain_OrphansDoesNotHaveAnImpactOnDependentProperty()
         {
             var dependencyMap = new DependenciesMap<TestOrder>()
-                .AddMap(o => o.ChildItemDoubledPrice, o => 2 * o.ChildItem.Price, o => o.ChildItem.Price);
+                .AddDependency(o => o.ChildItemDoubledPrice, o => 2 * o.ChildItem.Price, o => o.ChildItem.Price);
 
             var testOrder = new TestOrder { ChildItem = new ChildOrderItem { Price = _random.Next(0, 10) } };
 
@@ -1231,8 +1231,8 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void CollectionProperty_CollectionItemLeafPropertyChange()
         {
             var dependenciesMap = new DependenciesMap<TestOrder>()
-                                        .AddMap(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
-                                            o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Quantity);
+                                        .AddDependency(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
+                                            o => DependenciesTracking.CollectionExtensions.EachElement(o.ChildItems).Quantity);
 
             var itemsCount = _random.Next(1, 20);
             var itemQuantities = Enumerable.Range(0, itemsCount).Select(_ => _random.Next(0, 100)).ToList();
@@ -1281,8 +1281,8 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void RootAsACollection_CollectionItemLeafPropertyChange()
         {
             var dependenciesMap = new DependenciesMap<TestOrderItemsCollection>()
-                                        .AddMap(o => o.TotalQuantity, o => o.Sum(i => i.Quantity),
-                                            o => DependenciesTracker.CollectionExtensions.EachElement(o).Quantity);
+                                        .AddDependency(o => o.TotalQuantity, o => o.Sum(i => i.Quantity),
+                                            o => DependenciesTracking.CollectionExtensions.EachElement(o).Quantity);
 
             var itemsCount = _random.Next(1, 20);
             var itemQuantities = Enumerable.Range(0, itemsCount).Select(_ => _random.Next(0, 100)).ToList();
@@ -1331,8 +1331,8 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void CollectionProperty_Add()
         {
             var dependenciesMap = new DependenciesMap<TestOrder>()
-                                        .AddMap(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
-                                            o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Quantity);
+                                        .AddDependency(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
+                                            o => DependenciesTracking.CollectionExtensions.EachElement(o.ChildItems).Quantity);
 
             var itemsCount = _random.Next(2, 6);
             var itemQuantities = Enumerable.Range(0, itemsCount).Select(_ => _random.Next(0, 100)).ToList();
@@ -1397,8 +1397,8 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void CollectionProperty_Remove()
         {
             var dependenciesMap = new DependenciesMap<TestOrder>()
-                                        .AddMap(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
-                                            o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Quantity);
+                                        .AddDependency(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
+                                            o => DependenciesTracking.CollectionExtensions.EachElement(o.ChildItems).Quantity);
 
             var itemsCount = _random.Next(2, 6);
             var itemQuantities = Enumerable.Range(0, itemsCount).Select(_ => _random.Next(1, 100)).ToList();
@@ -1451,8 +1451,8 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void CollectionProperty_Remove_OrphansAreNotTracked()
         {
             var dependenciesMap = new DependenciesMap<TestOrder>()
-                                        .AddMap(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
-                                            o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Quantity);
+                                        .AddDependency(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
+                                            o => DependenciesTracking.CollectionExtensions.EachElement(o.ChildItems).Quantity);
 
             var itemsCount = _random.Next(2, 6);
             var items = Enumerable.Range(0, itemsCount).Select(_ => new ChildOrderItem { Quantity = _random.Next(1, 100) }).ToList();
@@ -1486,8 +1486,8 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void CollectionProperty_Replace()
         {
             var dependenciesMap = new DependenciesMap<TestOrder>()
-                .AddMap(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
-                    o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Quantity);
+                .AddDependency(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
+                    o => DependenciesTracking.CollectionExtensions.EachElement(o.ChildItems).Quantity);
 
             var itemsCount = _random.Next(2, 6);
             var itemQuantities = Enumerable.Range(0, itemsCount).Select(_ => _random.Next(1, 100)).ToList();
@@ -1565,8 +1565,8 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void CollectionProperty_Replace_OrphansAreNotTracked()
         {
             var dependenciesMap = new DependenciesMap<TestOrder>()
-                                        .AddMap(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
-                                            o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Quantity);
+                                        .AddDependency(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
+                                            o => DependenciesTracking.CollectionExtensions.EachElement(o.ChildItems).Quantity);
 
             var itemsCount = _random.Next(2, 6);
             var items = Enumerable.Range(0, itemsCount).Select(_ => new ChildOrderItem { Quantity = _random.Next(1, 100) }).ToList();
@@ -1600,8 +1600,8 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void CollectionProperty_Move()
         {
             var dependenciesMap = new DependenciesMap<TestOrder>()
-                                        .AddMap(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
-                                            o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Quantity);
+                                        .AddDependency(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
+                                            o => DependenciesTracking.CollectionExtensions.EachElement(o.ChildItems).Quantity);
 
             var itemsCount = _random.Next(2, 6);
             var itemQuantities = Enumerable.Range(0, itemsCount).Select(_ => _random.Next(0, 100)).ToList();
@@ -1667,8 +1667,8 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void CollectionProperty_Move_TrackerTracksCorrectItemsAfterMovement_RemoveItemAtTheMoveFromIndex()
         {
             var dependenciesMap = new DependenciesMap<TestOrder>()
-                                        .AddMap(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
-                                            o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Quantity);
+                                        .AddDependency(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
+                                            o => DependenciesTracking.CollectionExtensions.EachElement(o.ChildItems).Quantity);
 
             var itemsCount = _random.Next(10, 20);
             var itemQuantities = Enumerable.Range(0, itemsCount).Select(_ => _random.Next(0, 100)).ToList();
@@ -1739,8 +1739,8 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void CollectionProperty_Move_TrackerTracksCorrectItemsAfterMovement_RemoveItemAtTheMoveToIndex()
         {
             var dependenciesMap = new DependenciesMap<TestOrder>()
-                                        .AddMap(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
-                                            o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Quantity);
+                                        .AddDependency(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
+                                            o => DependenciesTracking.CollectionExtensions.EachElement(o.ChildItems).Quantity);
 
             var itemsCount = _random.Next(10, 20);
             var itemQuantities = Enumerable.Range(0, itemsCount).Select(_ => _random.Next(0, 100)).ToList();
@@ -1813,8 +1813,8 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void CollectionProperty_Reset_CorrectCalculation_OrphansAreNotTracked()
         {
             var dependenciesMap = new DependenciesMap<TestOrder>()
-                                        .AddMap(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
-                                            o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Quantity);
+                                        .AddDependency(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
+                                            o => DependenciesTracking.CollectionExtensions.EachElement(o.ChildItems).Quantity);
 
             var itemsCount = _random.Next(2, 6);
             var itemQuantities = Enumerable.Range(0, itemsCount).Select(_ => _random.Next(0, 100)).ToList();
@@ -1867,8 +1867,8 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void CollectionProperty_CollectionChanged_NewCollectionItemsAreTracked()
         {
             var dependenciesMap = new DependenciesMap<TestOrder>()
-                                        .AddMap(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
-                                            o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Quantity);
+                                        .AddDependency(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
+                                            o => DependenciesTracking.CollectionExtensions.EachElement(o.ChildItems).Quantity);
 
             var initialItemsCount = _random.Next(2, 6);
             var initialItemQuantities = Enumerable.Range(0, initialItemsCount).Select(_ => _random.Next(0, 100)).ToList();
@@ -1917,8 +1917,8 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void CollectionProperty_CollectionChanged_OrphanCollectionItemsAreNotTracked()
         {
             var dependenciesMap = new DependenciesMap<TestOrder>()
-                                        .AddMap(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
-                                            o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Quantity);
+                                        .AddDependency(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
+                                            o => DependenciesTracking.CollectionExtensions.EachElement(o.ChildItems).Quantity);
 
             var initialItemsCount = _random.Next(2, 6);
             var initialItemQuantities = Enumerable.Range(0, initialItemsCount).Select(_ => _random.Next(0, 100)).ToList();
@@ -1966,9 +1966,9 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void CollectionProperty_NullItemsSuccessfullyTracked()
         {
             var dependenciesMap = new DependenciesMap<TestOrder>()
-                                        .AddMap(o => o.ChildItemsTotalQuantity,
+                                        .AddDependency(o => o.ChildItemsTotalQuantity,
                                             o => o.ChildItems.Any(i => i == null) ? -1 : o.ChildItems.Sum(i => i.Quantity),
-                                                o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Quantity);
+                                                o => DependenciesTracking.CollectionExtensions.EachElement(o.ChildItems).Quantity);
 
             var itemsCount = _random.Next(2, 6);
             var itemQuantities = Enumerable.Range(0, itemsCount).Select(_ => _random.Next(0, 100)).ToList();
