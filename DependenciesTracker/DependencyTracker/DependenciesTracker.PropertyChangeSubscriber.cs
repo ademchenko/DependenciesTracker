@@ -5,6 +5,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using JetBrains.Annotations;
 
@@ -61,11 +62,20 @@ namespace DependenciesTracker
 
             private void Subscribe([NotNull] INotifyPropertyChanged notifyPropertyChange)
             {
-                _observer = Observable.FromEventPattern<PropertyChangedEventHandler, PropertyChangedEventArgs>(
-                    h => notifyPropertyChange.PropertyChanged += h,
-                    h => notifyPropertyChange.PropertyChanged -= h)
-                    .Where(sa => sa.EventArgs.PropertyName == PathItem.PropertyOrFieldName)
-                    .Subscribe(_ => OnObservedPropertyChanged());
+                notifyPropertyChange.PropertyChanged += notifyPropertyChange_PropertyChanged;
+                _observer = Disposable.Create(() => notifyPropertyChange.PropertyChanged -= notifyPropertyChange_PropertyChanged);
+
+                //_observer = Observable.FromEventPattern<PropertyChangedEventHandler, PropertyChangedEventArgs>(
+                //    h => notifyPropertyChange.PropertyChanged += h,
+                //    h => notifyPropertyChange.PropertyChanged -= h)
+                //    .Where(sa => sa.EventArgs.PropertyName == PathItem.PropertyOrFieldName)
+                //    .Subscribe(_ => OnObservedPropertyChanged());
+            }
+
+            private void notifyPropertyChange_PropertyChanged(object sender, PropertyChangedEventArgs e)
+            {
+                if (e.PropertyName == PathItem.PropertyOrFieldName)
+                    OnObservedPropertyChanged();
             }
 
             private void OnObservedPropertyChanged()
@@ -135,11 +145,18 @@ namespace DependenciesTracker
             {
                 Debug.Assert(notifyCollectionChange != null);
 
-                _observer = Observable
-                    .FromEventPattern<NotifyCollectionChangedEventHandler, NotifyCollectionChangedEventArgs>(
-                        h => notifyCollectionChange.CollectionChanged += h,
-                        h => notifyCollectionChange.CollectionChanged -= h)
-                    .Subscribe(ep => CollectionItemsChanged(ep.EventArgs));
+                notifyCollectionChange.CollectionChanged += notifyCollectionChange_CollectionChanged;
+                _observer = Disposable.Create(() => notifyCollectionChange.CollectionChanged -= notifyCollectionChange_CollectionChanged);
+                //_observer = Observable
+                //    .FromEventPattern<NotifyCollectionChangedEventHandler, NotifyCollectionChangedEventArgs>(
+                //        h => notifyCollectionChange.CollectionChanged += h,
+                //        h => notifyCollectionChange.CollectionChanged -= h)
+                //    .Subscribe(ep => CollectionItemsChanged(ep.EventArgs));
+            }
+
+            private void notifyCollectionChange_CollectionChanged(object _, NotifyCollectionChangedEventArgs e)
+            {
+                CollectionItemsChanged(e);
             }
 
             private const int _invalidCollectionIndexValue = -1;
@@ -154,7 +171,7 @@ namespace DependenciesTracker
 
             private ISubscriberBase CreateSubscriberForCollectionItem(object collectionItem)
             {
-                return collectionItem == null? new NullCollectionItemSubscriber() : (ISubscriberBase)CreateSubscriber(collectionItem, PathItem.Ancestor, OnChanged);
+                return collectionItem == null ? new NullCollectionItemSubscriber() : (ISubscriberBase)CreateSubscriber(collectionItem, PathItem.Ancestor, OnChanged);
             }
 
             private void UpdateAncestors(NotifyCollectionChangedEventArgs eventArgs)
