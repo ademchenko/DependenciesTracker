@@ -43,13 +43,13 @@ namespace DependenciesTracker
 
         private void ProvokeDependentPropertiesUpdate([CanBeNull] PathItemBase<T> pathItem)
         {
-            if (pathItem == null)
-                return;
+            while (pathItem != null)
+            {
+                if (pathItem.UpdateDependentPropertyOrFieldAction != null)
+                    pathItem.UpdateDependentPropertyOrFieldAction(_trackedObject);
 
-            if (pathItem.UpdateDependentPropertyOrFieldAction != null)
-                pathItem.UpdateDependentPropertyOrFieldAction(_trackedObject);
-
-            ProvokeDependentPropertiesUpdate(pathItem.Ancestor);
+                pathItem = pathItem.Ancestor;
+            }
         }
 
 
