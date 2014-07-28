@@ -63,11 +63,6 @@ namespace DependenciesTracker.Tests.Stubs
             _tracker = _dependenciesMap.StartTracking(this);
         }
 
-        public override bool Equals(object obj)
-        {
-            return true;
-        }
-
         public event PropertyChangedEventHandler PropertyChanged;
 
         protected virtual void OnPropertyChanged(string propertyName)

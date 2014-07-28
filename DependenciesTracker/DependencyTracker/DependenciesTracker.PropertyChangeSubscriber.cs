@@ -144,24 +144,24 @@ namespace DependenciesTracker
                 switch (eventArgs.Action)
                 {
                     case NotifyCollectionChangedAction.Add:
-                        CheckIndexValid(eventArgs.NewStartingIndex, NotifyCollectionChangedAction.Add);
+                        CheckIndexValid(eventArgs.NewStartingIndex, "NewStartingIndex", NotifyCollectionChangedAction.Add);
                         Ancestors.Insert(eventArgs.NewStartingIndex,
                             CreateSubscriber(eventArgs.NewItems.Cast<object>().Single(), PathItem.Ancestor, OnChanged));
                         return;
                     case NotifyCollectionChangedAction.Remove:
-                        CheckIndexValid(eventArgs.OldStartingIndex, NotifyCollectionChangedAction.Remove);
+                        CheckIndexValid(eventArgs.OldStartingIndex, "OldStartingIndex", NotifyCollectionChangedAction.Remove);
                         Ancestors[eventArgs.OldStartingIndex].Dispose();
                         Ancestors.RemoveAt(eventArgs.OldStartingIndex);
                         return;
                     case NotifyCollectionChangedAction.Replace:
-                        CheckIndexValid(eventArgs.OldStartingIndex, NotifyCollectionChangedAction.Replace);
+                        CheckIndexValid(eventArgs.OldStartingIndex, "OldStartingIndex", NotifyCollectionChangedAction.Replace);
                         Ancestors[eventArgs.OldStartingIndex].Dispose();
                         Ancestors[eventArgs.OldStartingIndex] = CreateSubscriber(eventArgs.NewItems.Cast<object>().Single(),
                             PathItem.Ancestor, OnChanged);
                         return;
                     case NotifyCollectionChangedAction.Move:
-                        CheckIndexValid(eventArgs.OldStartingIndex, NotifyCollectionChangedAction.Move);
-                        CheckIndexValid(eventArgs.NewStartingIndex, NotifyCollectionChangedAction.Move);
+                        CheckIndexValid(eventArgs.OldStartingIndex, "OldStartingIndex", NotifyCollectionChangedAction.Move);
+                        CheckIndexValid(eventArgs.NewStartingIndex, "NewStartingIndex", NotifyCollectionChangedAction.Move);
                         var movingAncestor = Ancestors[eventArgs.OldStartingIndex];
                         Ancestors.RemoveAt(eventArgs.OldStartingIndex);
                         Ancestors.Insert(eventArgs.NewStartingIndex, movingAncestor);
@@ -173,14 +173,14 @@ namespace DependenciesTracker
                             Ancestors.Add(ancestor);
                         return;
                     default:
-                        throw new ArgumentOutOfRangeException();
+                        throw new ArgumentException(string.Format("Unknown eventArgs.Action enum action: {0}", eventArgs.Action), "eventArgs");
                 }
             }
 
-            private static void CheckIndexValid(int index, NotifyCollectionChangedAction action)
+            private static void CheckIndexValid(int index, string indexName, NotifyCollectionChangedAction action)
             {
                 if (index == _invalidCollectionIndexValue)
-                    throw new NotSupportedException(string.Format("Processing {0} with unset index is not supported", action));
+                    throw new NotSupportedException(string.Format("Processing {0} with unset {1} is not supported", action, indexName));
             }
 
             public override void Dispose()

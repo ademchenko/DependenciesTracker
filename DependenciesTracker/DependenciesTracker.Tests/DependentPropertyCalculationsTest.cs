@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using JetBrains.Annotations;
 using Xunit;
@@ -1351,7 +1352,7 @@ namespace DependenciesTracker.Tests.PathBuilding
 
             var itemsToAddCount = _random.Next(1, 5);
             var newItemQuantities = Enumerable.Range(0, itemsToAddCount).Select(_ => _random.Next(1, 100)).ToList();
-            var itemsToAdd = newItemQuantities.Select(q => new ChildOrderItem { Quantity = q });
+            var itemsToAdd = newItemQuantities.Select(q => new ChildOrderItem { Quantity = q }).ToList();
 
             var collectionChangeRaiseCount = 0;
             testOrder.ChildItems.CollectionChanged += (sender, e) =>
@@ -1375,6 +1376,19 @@ namespace DependenciesTracker.Tests.PathBuilding
             var expectedChangedTotalQuantity = initiallyExpectedTotalQuantity + newItemQuantities.Sum();
 
             CheckExpectedQuantityChanged(initiallyExpectedTotalQuantity, expectedChangedTotalQuantity);
+
+            Assert.Equal(expectedChangedTotalQuantity, testOrder.ChildItemsTotalQuantity);
+
+            //Check that new items properties are tracked
+            var indexToChangeProperty = _random.Next(0, itemsToAdd.Count);
+            var changeDelta = _random.Next(1, 100) * (_random.Next(0, 2) == 0 ? 1 : -1);
+
+            Assert.PropertyChanged(testOrder, "ChildItemsTotalQuantity", () =>
+            {
+                itemsToAdd[indexToChangeProperty].Quantity += changeDelta;
+            });
+
+            expectedChangedTotalQuantity += changeDelta;
 
             Assert.Equal(expectedChangedTotalQuantity, testOrder.ChildItemsTotalQuantity);
         }
@@ -1429,10 +1443,44 @@ namespace DependenciesTracker.Tests.PathBuilding
             var expectedChangedTotalQuantity = itemQuantities.Sum();
 
             CheckExpectedQuantityChanged(initiallyExpectedTotalQuantity, expectedChangedTotalQuantity);
-            
+
             Assert.Equal(expectedChangedTotalQuantity, testOrder.ChildItemsTotalQuantity);
         }
 
+        [Fact]
+        public void CollectionProperty_Remove_OrphansAreNotTracked()
+        {
+            var dependenciesMap = new DependenciesMap<TestOrder>()
+                                        .AddMap(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
+                                            o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Quantity);
+
+            var itemsCount = _random.Next(2, 6);
+            var items = Enumerable.Range(0, itemsCount).Select(_ => new ChildOrderItem { Quantity = _random.Next(1, 100) }).ToList();
+            var indexToRemove = _random.Next(0, itemsCount);
+            var itemToRemove = items[indexToRemove];
+
+            var testOrder = new TestOrder
+            {
+                ChildItems = new ObservableCollection<ChildOrderItem>(items)
+            };
+
+            dependenciesMap.StartTracking(testOrder);
+
+            //Precondition - dependent property is recalculated on item removing
+            Assert.PropertyChanged(testOrder, "ChildItemsTotalQuantity", () =>
+            {
+                testOrder.ChildItems.RemoveAt(indexToRemove);
+            });
+
+            testOrder.PropertyChanged += (_, args) =>
+            {
+                Debug.Assert(args.PropertyName == "ChildItemsTotalQuantity");
+                Assert.False(true, "Changing dependent property ChildItemsTotalQuantity is not expected.");
+            };
+
+            //Post condition - changing orphan (removed) child item property doesn't affect dependent property
+            itemToRemove.Quantity += 2;
+        }
 
         [Fact]
         public void CollectionProperty_Replace()
@@ -1457,7 +1505,7 @@ namespace DependenciesTracker.Tests.PathBuilding
 
             Assert.Equal(initiallyExpectedTotalQuantity, testOrder.ChildItemsTotalQuantity);
 
-            var replacedItemIndices = Enumerable.Range(0, _random.Next(1, itemsCount)).Select(_ => _random.Next(0, itemsCount)).Distinct().ToList();
+            var replacedItemIndices = Enumerable.Range(1, _random.Next(1, itemsCount)).Select(_ => _random.Next(0, itemsCount)).Distinct().ToList();
             var newItemQuantities = new Queue<int>(Enumerable.Range(0, replacedItemIndices.Count).Select(_ => _random.Next(1, 100)));
 
             var collectionChangeRaiseCount = 0;
@@ -1469,12 +1517,16 @@ namespace DependenciesTracker.Tests.PathBuilding
                 collectionChangeRaiseCount++;
             };
 
+            var newOrderItems = new List<ChildOrderItem>();
+
             foreach (var itemIndex in replacedItemIndices)
             {
                 var newQuantity = newItemQuantities.Dequeue();
                 itemQuantities[itemIndex] = newQuantity;
-                
+
                 var newOrderItem = new ChildOrderItem { Quantity = newQuantity };
+                newOrderItems.Add(newOrderItem);
+
                 testOrder.ChildItems[itemIndex] = newOrderItem;
             }
 
@@ -1487,6 +1539,54 @@ namespace DependenciesTracker.Tests.PathBuilding
             CheckExpectedQuantityChanged(initiallyExpectedTotalQuantity, expectedChangedTotalQuantity);
 
             Assert.Equal(expectedChangedTotalQuantity, testOrder.ChildItemsTotalQuantity);
+
+            //Check that new items properties are tracked
+            var indexToChangeProperty = _random.Next(0, newOrderItems.Count);
+            var changeDelta = _random.Next(1, 100) * (_random.Next(0, 2) == 0 ? 1 : -1);
+
+            Assert.PropertyChanged(testOrder, "ChildItemsTotalQuantity", () =>
+            {
+                newOrderItems[indexToChangeProperty].Quantity += changeDelta;
+            });
+
+            expectedChangedTotalQuantity += changeDelta;
+
+            Assert.Equal(expectedChangedTotalQuantity, testOrder.ChildItemsTotalQuantity);
+        }
+
+        [Fact]
+        public void CollectionProperty_Replace_OrphansAreNotTracked()
+        {
+            var dependenciesMap = new DependenciesMap<TestOrder>()
+                                        .AddMap(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
+                                            o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Quantity);
+
+            var itemsCount = _random.Next(2, 6);
+            var items = Enumerable.Range(0, itemsCount).Select(_ => new ChildOrderItem { Quantity = _random.Next(1, 100) }).ToList();
+            var indexToReplace = _random.Next(0, itemsCount);
+            var itemToRemove = items[indexToReplace];
+
+            var testOrder = new TestOrder
+            {
+                ChildItems = new ObservableCollection<ChildOrderItem>(items)
+            };
+
+            dependenciesMap.StartTracking(testOrder);
+
+            //Precondition - dependent property is recalculated on item removing
+            Assert.PropertyChanged(testOrder, "ChildItemsTotalQuantity", () =>
+            {
+                testOrder.ChildItems.RemoveAt(indexToReplace);
+            });
+
+            testOrder.PropertyChanged += (_, args) =>
+            {
+                Debug.Assert(args.PropertyName == "ChildItemsTotalQuantity");
+                Assert.False(true, "Changing dependent property ChildItemsTotalQuantity is not expected.");
+            };
+
+            //Post condition - changing orphan (removed) child item property doesn't affect dependent property
+            itemToRemove.Quantity += 2;
         }
 
         [Fact]
@@ -1520,7 +1620,7 @@ namespace DependenciesTracker.Tests.PathBuilding
             testOrder.ChildItems.CollectionChanged += (sender, e) =>
             {
                 if (e.Action != NotifyCollectionChangedAction.Move)
-                    throw new InvalidOperationException("Wrong test condition. This test should check \"Replace\" action.");
+                    throw new InvalidOperationException("Wrong test condition. This test should check \"Move\" action.");
 
                 collectionChangeRaised = true;
             };
@@ -1534,16 +1634,176 @@ namespace DependenciesTracker.Tests.PathBuilding
                 var newIndex = _random.Next(0, itemsCount);
                 testOrder.ChildItems.Move(movedItemIndex, newIndex);
             }
-            
+
             if (!collectionChangeRaised)
                 throw new InvalidOperationException("Wrong test condition. No one \"Move\" event has been raised.");
 
             Assert.Equal(initiallyExpectedTotalQuantity, testOrder.ChildItemsTotalQuantity);
         }
 
+        //Two following 2 tests are kind of whitebox tests but they are quite important.
+        //According to the implementation details internal tracking structure mimics the source collection items order.
+        //So, if a collection consists of three items { 'A', 'B', 'C' } then the tracking structure consists of three 
+        //tracking items over the collection elements: { trackingOf('A'), trackingOf('B'), trackingOf('C') }.
+        //When me do any of actions on the source collection (Add, Remove, Move and so on) the tracking structure
+        //repeats the same action. Like removeAt(0) on the source collection causes trackingOf('A') to be removed as well.
+        //Move(0, 2) causes tracking structure to be reordered to { trackingOf('B'), trackingOf('C'), trackingOf('A') } state.
+        //So, it's not possible to catch wrong work of a source collection Move handling just by checking the value of dependent
+        //property after the movement since it remains the same. Instead we need to find the way to check internal state of tracking
+        //items. The following 2 tests do two checks for that:
+        // 1. The tracking item on the place 'moveFromIndex' is changed after the source collection item movement. For that check we 
+        // remove element at 'moveFromIndex' and expect that this action won't affect the tracking of previously moved item.
+        // 2. The tracking item on the place 'moveToIndex' is changed after the source collection item movement and is equal to 
+        //trackingOf('A'). For that check we remove element at 'moveToIndex' and expect that the previously moved item won't be tracked
+        //after that.
+        [Fact]
+        public void CollectionProperty_Move_TrackerTracksCorrectItemsAfterMovement_RemoveItemAtTheMoveFromIndex()
+        {
+            var dependenciesMap = new DependenciesMap<TestOrder>()
+                                        .AddMap(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
+                                            o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Quantity);
+
+            var itemsCount = _random.Next(10, 20);
+            var itemQuantities = Enumerable.Range(0, itemsCount).Select(_ => _random.Next(0, 100)).ToList();
+
+            var initiallyExpectedTotalQuantity = itemQuantities.Sum();
+
+            var childOrderItems = itemQuantities.Select(q => new ChildOrderItem { Quantity = q }).ToList();
+
+            var testOrder = new TestOrder
+            {
+                ChildItems = new ObservableCollection<ChildOrderItem>(childOrderItems)
+            };
+
+            Assert.Equal(0, testOrder.ChildItemsTotalQuantity);
+
+            dependenciesMap.StartTracking(testOrder);
+
+            Assert.Equal(initiallyExpectedTotalQuantity, testOrder.ChildItemsTotalQuantity);
+
+            var moveFromIndex = _random.Next(0, itemsCount / 2);
+            var moveToIndex = _random.Next(itemsCount / 2, itemsCount);
+
+            var movingItem = childOrderItems[moveFromIndex];
+
+            Debug.Assert(moveFromIndex != moveToIndex);
+
+            var collectionChangeRaised = false;
+            NotifyCollectionChangedEventHandler childItemsCollectionChangedOnMoveAction = (sender, e) =>
+            {
+                if (e.Action != NotifyCollectionChangedAction.Move)
+                    throw new InvalidOperationException(
+                        string.Format("Wrong test condition. This test expects \"Move\" action, but actual was {0} action.", e.Action));
+
+                collectionChangeRaised = true;
+            };
+
+            testOrder.ChildItems.CollectionChanged += childItemsCollectionChangedOnMoveAction;
+
+            //Do movement
+            testOrder.ChildItems.Move(moveFromIndex, moveToIndex);
+
+            if (!collectionChangeRaised)
+                throw new InvalidOperationException("Wrong test condition. No one \"Move\" event has been raised.");
+
+            testOrder.ChildItems.CollectionChanged -= childItemsCollectionChangedOnMoveAction;
+
+            Assert.Equal(initiallyExpectedTotalQuantity, testOrder.ChildItemsTotalQuantity);
+
+            //We're going to ensure that internal items tracking list updated according to the source items moving.
+
+            //Precondition - moving item is being tracked before the remove element at first index
+            Assert.PropertyChanged(testOrder, "ChildItemsTotalQuantity", () =>
+            {
+                movingItem.Quantity += 2;
+            });
+
+            testOrder.ChildItems.RemoveAt(moveFromIndex);
+
+            //Post condition - movingItem continues to be tracked since it was moved from the first index 
+            //before the removing by first index
+            Assert.PropertyChanged(testOrder, "ChildItemsTotalQuantity", () =>
+            {
+                movingItem.Quantity += 2;
+            });
+        }
 
         [Fact]
-        public void CollectionProperty_Reset()
+        public void CollectionProperty_Move_TrackerTracksCorrectItemsAfterMovement_RemoveItemAtTheMoveToIndex()
+        {
+            var dependenciesMap = new DependenciesMap<TestOrder>()
+                                        .AddMap(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
+                                            o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Quantity);
+
+            var itemsCount = _random.Next(10, 20);
+            var itemQuantities = Enumerable.Range(0, itemsCount).Select(_ => _random.Next(0, 100)).ToList();
+
+            var initiallyExpectedTotalQuantity = itemQuantities.Sum();
+
+            var childOrderItems = itemQuantities.Select(q => new ChildOrderItem { Quantity = q }).ToList();
+
+            var testOrder = new TestOrder
+            {
+                ChildItems = new ObservableCollection<ChildOrderItem>(childOrderItems)
+            };
+
+            Assert.Equal(0, testOrder.ChildItemsTotalQuantity);
+
+            dependenciesMap.StartTracking(testOrder);
+
+            Assert.Equal(initiallyExpectedTotalQuantity, testOrder.ChildItemsTotalQuantity);
+
+            var moveFromIndex = _random.Next(0, itemsCount / 2);
+            var moveToIndex = _random.Next(itemsCount / 2, itemsCount);
+
+            var movingItem = childOrderItems[moveFromIndex];
+
+            Debug.Assert(moveFromIndex != moveToIndex);
+
+            var collectionChangeRaised = false;
+            NotifyCollectionChangedEventHandler childItemsCollectionChangedOnMoveAction = (sender, e) =>
+            {
+                if (e.Action != NotifyCollectionChangedAction.Move)
+                    throw new InvalidOperationException(
+                        string.Format("Wrong test condition. This test expects \"Move\" action, but actual was {0} action.", e.Action));
+
+                collectionChangeRaised = true;
+            };
+
+            testOrder.ChildItems.CollectionChanged += childItemsCollectionChangedOnMoveAction;
+
+            //Do movement
+            testOrder.ChildItems.Move(moveFromIndex, moveToIndex);
+
+            if (!collectionChangeRaised)
+                throw new InvalidOperationException("Wrong test condition. No one \"Move\" event has been raised.");
+
+            testOrder.ChildItems.CollectionChanged -= childItemsCollectionChangedOnMoveAction;
+
+            Assert.Equal(initiallyExpectedTotalQuantity, testOrder.ChildItemsTotalQuantity);
+
+            //We're going to ensure that internal items tracking list updated according to the source items moving.
+
+            //Precondition - moving item is being tracked before the remove element at first index
+            Assert.PropertyChanged(testOrder, "ChildItemsTotalQuantity", () =>
+            {
+                movingItem.Quantity += 2;
+            });
+
+            testOrder.ChildItems.RemoveAt(moveToIndex);
+
+            //Post condition - movingItem is removed from the collection and therefore shouldn't be tracked
+            testOrder.PropertyChanged += (_, eventArgs) =>
+            {
+                Debug.Assert(eventArgs.PropertyName == "ChildItemsTotalQuantity");
+                Assert.False(true, "No property change was expected because orphan child item property had been changed.");
+            };
+
+            movingItem.Quantity += 2;
+        }
+
+        [Fact]
+        public void CollectionProperty_Reset_CorrectCalculation_OrphansAreNotTracked()
         {
             var dependenciesMap = new DependenciesMap<TestOrder>()
                                         .AddMap(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
@@ -1554,9 +1814,11 @@ namespace DependenciesTracker.Tests.PathBuilding
 
             var initiallyExpectedTotalQuantity = itemQuantities.Sum();
 
+            var childOrderItems = itemQuantities.Select(q => new ChildOrderItem { Quantity = q }).ToList();
+
             var testOrder = new TestOrder
             {
-                ChildItems = new ObservableCollection<ChildOrderItem>(itemQuantities.Select(q => new ChildOrderItem { Quantity = q }))
+                ChildItems = new ObservableCollection<ChildOrderItem>(childOrderItems)
             };
 
             Assert.Equal(0, testOrder.ChildItemsTotalQuantity);
@@ -1582,6 +1844,16 @@ namespace DependenciesTracker.Tests.PathBuilding
             CheckExpectedQuantityChanged(initiallyExpectedTotalQuantity, 0);
 
             Assert.Equal(0, testOrder.ChildItemsTotalQuantity);
+
+            //Check that orphans are not tracked
+            testOrder.PropertyChanged += (_, args) =>
+            {
+                Debug.Assert(args.PropertyName == "ChildItemsTotalQuantity");
+                Assert.False(true, "Changing dependent property ChildItemsTotalQuantity is not expected.");
+            };
+
+            foreach (var childOrderItem in childOrderItems)
+                childOrderItem.Quantity += _random.Next(1, 100)*(_random.Next(0, 2) == 0 ? 1 : -1);
         }
 
         private static void CheckExpectedQuantityChanged(int initiallyExpectedTotalQuantity, int expectedChangedTotalQuantity)
