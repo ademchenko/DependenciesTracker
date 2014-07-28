@@ -110,6 +110,7 @@ namespace DependenciesTracker
                     Ancestors.Add(ancestor);
             }
 
+            [NotNull]
             private IEnumerable<SubscriberBase> InitAncestors(IEnumerable items)
             {
                 if (PathItem.Ancestor == null)
@@ -234,15 +235,17 @@ namespace DependenciesTracker
 
             protected SubscriberBase([NotNull] object effectiveObject, [NotNull] PathItemBase<T> pathItem, [NotNull] Action<PathItemBase<T>> onChanged)
             {
-                if (effectiveObject == null) throw new ArgumentNullException("effectiveObject");
-                if (pathItem == null) throw new ArgumentNullException("pathItem");
-                if (onChanged == null) throw new ArgumentNullException("onChanged");
+                if (effectiveObject == null) 
+                    throw new ArgumentNullException("effectiveObject");
+                if (pathItem == null) 
+                    throw new ArgumentNullException("pathItem");
+                if (onChanged == null) 
+                    throw new ArgumentNullException("onChanged");
 
                 _effectiveObject = effectiveObject;
                 PathItem = pathItem;
                 OnChanged = onChanged;
             }
-
 
             public abstract void Dispose();
         }

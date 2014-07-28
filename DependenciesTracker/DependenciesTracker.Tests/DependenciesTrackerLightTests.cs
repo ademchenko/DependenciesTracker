@@ -5,7 +5,7 @@ using Xunit;
 
 namespace DependenciesTracker.Tests
 {
-    public class DependenciesTrackerTests
+    public class DependenciesTrackerLightTests
     {
         [Fact]
         public void OneLevelDepencyGenericTest()
@@ -182,7 +182,6 @@ namespace DependenciesTracker.Tests
         public void ObservableCollectionTest()
         {
             ObservableCollection<FlatOrder> orders = new ObservableCollection<FlatOrder>();
-            orders.CollectionChanged += orders_CollectionChanged;
 
             var flatOrder1 = new FlatOrder();
             var flatOrder2 = new FlatOrder();
@@ -197,11 +196,6 @@ namespace DependenciesTracker.Tests
             orders.Remove(flatOrder1);
 
             //Debug.WriteLine("Left {0}", orders.Single().GetHashCode());
-        }
-
-        void orders_CollectionChanged(object sender, System.Collections.Specialized.NotifyCollectionChangedEventArgs e)
-        {
-
         }
     }
 }

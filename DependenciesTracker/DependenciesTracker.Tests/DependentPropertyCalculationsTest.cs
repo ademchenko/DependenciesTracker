@@ -1490,7 +1490,7 @@ namespace DependenciesTracker.Tests.PathBuilding
                                             o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Quantity);
 
             var itemsCount = _random.Next(2, 6);
-            var itemQuantities = Enumerable.Range(0, itemsCount).Select(_ => _random.Next(0, 100)).ToList();
+            var itemQuantities = Enumerable.Range(0, itemsCount).Select(_ => _random.Next(1, 100)).ToList();
 
             var initiallyExpectedTotalQuantity = itemQuantities.Sum();
 
@@ -1853,7 +1853,163 @@ namespace DependenciesTracker.Tests.PathBuilding
             };
 
             foreach (var childOrderItem in childOrderItems)
-                childOrderItem.Quantity += _random.Next(1, 100)*(_random.Next(0, 2) == 0 ? 1 : -1);
+                childOrderItem.Quantity += _random.Next(1, 100) * (_random.Next(0, 2) == 0 ? 1 : -1);
+        }
+
+        [Fact]
+        public void CollectionProperty_CollectionChanged_NewCollectionItemsAreTracked()
+        {
+            var dependenciesMap = new DependenciesMap<TestOrder>()
+                                        .AddMap(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
+                                            o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Quantity);
+
+            var initialItemsCount = _random.Next(2, 6);
+            var initialItemQuantities = Enumerable.Range(0, initialItemsCount).Select(_ => _random.Next(0, 100)).ToList();
+            var initiallyExpectedTotalQuantity = initialItemQuantities.Sum();
+            var initialChildOrderItems = initialItemQuantities.Select(q => new ChildOrderItem { Quantity = q }).ToList();
+
+            var newItemsCount = _random.Next(2, 6);
+            var newItemQuantities = Enumerable.Range(0, newItemsCount).Select(_ => _random.Next(0, 100)).ToList();
+            var newExpectedTotalQuantity = newItemQuantities.Sum();
+            var newChildOrderItems = newItemQuantities.Select(q => new ChildOrderItem { Quantity = q }).ToList();
+
+            var testOrder = new TestOrder
+            {
+                ChildItems = new ObservableCollection<ChildOrderItem>(initialChildOrderItems)
+            };
+
+            Assert.Equal(0, testOrder.ChildItemsTotalQuantity);
+
+            dependenciesMap.StartTracking(testOrder);
+
+            Assert.Equal(initiallyExpectedTotalQuantity, testOrder.ChildItemsTotalQuantity);
+
+            Assert.PropertyChanged(testOrder, "ChildItemsTotalQuantity", () =>
+            {
+                testOrder.ChildItems = new ObservableCollection<ChildOrderItem>(newChildOrderItems);
+            });
+
+            Assert.Equal(newExpectedTotalQuantity, testOrder.ChildItemsTotalQuantity);
+
+            //Check that new items properties are tracked
+            var indexToChangeProperty = _random.Next(0, newChildOrderItems.Count);
+
+            var changeDelta = _random.Next(1, 100) * (_random.Next(0, 2) == 0 ? 1 : -1);
+
+            Assert.PropertyChanged(testOrder, "ChildItemsTotalQuantity", () =>
+            {
+                newChildOrderItems[indexToChangeProperty].Quantity += changeDelta;
+            });
+
+            newExpectedTotalQuantity += changeDelta;
+
+            Assert.Equal(newExpectedTotalQuantity, testOrder.ChildItemsTotalQuantity);
+        }
+
+        [Fact]
+        public void CollectionProperty_CollectionChanged_OrphanCollectionItemsAreNotTracked()
+        {
+            var dependenciesMap = new DependenciesMap<TestOrder>()
+                                        .AddMap(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
+                                            o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Quantity);
+
+            var initialItemsCount = _random.Next(2, 6);
+            var initialItemQuantities = Enumerable.Range(0, initialItemsCount).Select(_ => _random.Next(0, 100)).ToList();
+            var initiallyExpectedTotalQuantity = initialItemQuantities.Sum();
+            var initialChildOrderItems = initialItemQuantities.Select(q => new ChildOrderItem { Quantity = q }).ToList();
+
+            var newItemsCount = _random.Next(2, 6);
+            var newItemQuantities = Enumerable.Range(0, newItemsCount).Select(_ => _random.Next(0, 100)).ToList();
+            var newExpectedTotalQuantity = newItemQuantities.Sum();
+            var newChildOrderItems = newItemQuantities.Select(q => new ChildOrderItem { Quantity = q }).ToList();
+
+            var testOrder = new TestOrder
+            {
+                ChildItems = new ObservableCollection<ChildOrderItem>(initialChildOrderItems)
+            };
+
+            Assert.Equal(0, testOrder.ChildItemsTotalQuantity);
+
+            dependenciesMap.StartTracking(testOrder);
+
+            Assert.Equal(initiallyExpectedTotalQuantity, testOrder.ChildItemsTotalQuantity);
+
+            Assert.PropertyChanged(testOrder, "ChildItemsTotalQuantity", () =>
+            {
+                testOrder.ChildItems = new ObservableCollection<ChildOrderItem>(newChildOrderItems);
+            });
+
+            Assert.Equal(newExpectedTotalQuantity, testOrder.ChildItemsTotalQuantity);
+
+            testOrder.PropertyChanged += (_, args) =>
+            {
+                Debug.Assert(args.PropertyName == "ChildItemsTotalQuantity");
+                Assert.False(true, "Changing dependent property ChildItemsTotalQuantity is not expected.");
+            };
+
+            //Check that orphan items properties are not tracked
+            foreach (var initialChildOrderItem in initialChildOrderItems)
+            {
+                var changeDelta = _random.Next(1, 100) * (_random.Next(0, 2) == 0 ? 1 : -1);
+                initialChildOrderItem.Quantity += changeDelta;
+            }
+        }
+
+        [Fact]
+        public void CollectionProperty_NullItemsSuccessfullyTracked()
+        {
+            var dependenciesMap = new DependenciesMap<TestOrder>()
+                                        .AddMap(o => o.ChildItemsTotalQuantity,
+                                            o => o.ChildItems.Any(i => i == null) ? -1 : o.ChildItems.Sum(i => i.Quantity),
+                                                o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Quantity);
+
+            var itemsCount = _random.Next(2, 6);
+            var itemQuantities = Enumerable.Range(0, itemsCount).Select(_ => _random.Next(0, 100)).ToList();
+            var expectedTotalQuantity = itemQuantities.Sum();
+            var initialChildOrderItems = itemQuantities.Select(q => new ChildOrderItem { Quantity = q }).ToList();
+
+            var indexToInsertNullItem = _random.Next(0, itemsCount);
+
+            var testOrder = new TestOrder
+            {
+                ChildItems = new ObservableCollection<ChildOrderItem>(initialChildOrderItems)
+            };
+
+            Assert.Equal(0, testOrder.ChildItemsTotalQuantity);
+
+            dependenciesMap.StartTracking(testOrder);
+
+            Assert.Equal(expectedTotalQuantity, testOrder.ChildItemsTotalQuantity);
+
+            Assert.PropertyChanged(testOrder, "ChildItemsTotalQuantity", () =>
+            {
+                testOrder.ChildItems.Insert(indexToInsertNullItem, null);
+            });
+
+            Assert.Equal(-1, testOrder.ChildItemsTotalQuantity);
+
+            //Then we replace null item with non-null item and trying to change its properties 
+            //to ensure the new tracking has been started successfully
+            var newItemQuantityDelta = _random.Next(1, 100) * (_random.Next(0, 2) == 0 ? 1 : -1);
+            var newItemQuantity = itemQuantities[indexToInsertNullItem] + newItemQuantityDelta;
+            var newChildOrderItem = new ChildOrderItem { Quantity = newItemQuantity };
+            
+            testOrder.ChildItems[indexToInsertNullItem] = newChildOrderItem;
+
+            expectedTotalQuantity += newItemQuantityDelta;
+            
+            Assert.Equal(expectedTotalQuantity, testOrder.ChildItemsTotalQuantity);
+
+            newItemQuantityDelta = _random.Next(1, 100) * (_random.Next(0, 2) == 0 ? 1 : -1);
+
+            Assert.PropertyChanged(testOrder, "ChildItemsTotalQuantity", () =>
+            {
+                newChildOrderItem.Quantity += newItemQuantityDelta;
+            });
+
+            expectedTotalQuantity += newItemQuantityDelta;
+
+            Assert.Equal(expectedTotalQuantity, testOrder.ChildItemsTotalQuantity);
         }
 
         private static void CheckExpectedQuantityChanged(int initiallyExpectedTotalQuantity, int expectedChangedTotalQuantity)
