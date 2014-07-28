@@ -11,7 +11,7 @@ namespace DependenciesTracker
         [NotNull]
         private readonly T _trackedObject;
         [NotNull]
-        private readonly IList<SubscriberBase> _rootSubscribers = new List<SubscriberBase>();
+        private readonly IList<ISubscriberBase> _rootSubscribers = new List<ISubscriberBase>();
 
         public DependenciesTracker([NotNull] DependenciesMap<T> map, [NotNull] T trackedObject)
         {

@@ -1486,8 +1486,8 @@ namespace DependenciesTracker.Tests.PathBuilding
         public void CollectionProperty_Replace()
         {
             var dependenciesMap = new DependenciesMap<TestOrder>()
-                                        .AddMap(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
-                                            o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Quantity);
+                .AddMap(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
+                    o => DependenciesTracker.CollectionExtensions.EachElement(o.ChildItems).Quantity);
 
             var itemsCount = _random.Next(2, 6);
             var itemQuantities = Enumerable.Range(0, itemsCount).Select(_ => _random.Next(1, 100)).ToList();
@@ -1496,7 +1496,9 @@ namespace DependenciesTracker.Tests.PathBuilding
 
             var testOrder = new TestOrder
             {
-                ChildItems = new ObservableCollection<ChildOrderItem>(itemQuantities.Select(q => new ChildOrderItem { Quantity = q }))
+                ChildItems =
+                    new ObservableCollection<ChildOrderItem>(
+                        itemQuantities.Select(q => new ChildOrderItem { Quantity = q }))
             };
 
             Assert.Equal(0, testOrder.ChildItemsTotalQuantity);
@@ -1505,8 +1507,13 @@ namespace DependenciesTracker.Tests.PathBuilding
 
             Assert.Equal(initiallyExpectedTotalQuantity, testOrder.ChildItemsTotalQuantity);
 
-            var replacedItemIndices = Enumerable.Range(1, _random.Next(1, itemsCount)).Select(_ => _random.Next(0, itemsCount)).Distinct().ToList();
-            var newItemQuantities = new Queue<int>(Enumerable.Range(0, replacedItemIndices.Count).Select(_ => _random.Next(1, 100)));
+            var replacedItemIndices =
+                Enumerable.Range(0, _random.Next(1, itemsCount + 1))
+                    .Select(_ => _random.Next(0, itemsCount))
+                    .Distinct()
+                    .ToList();
+
+            var newItemDeltaQuantities = new Queue<int>(Enumerable.Range(0, replacedItemIndices.Count).Select(_ => _random.Next(1, 100)));
 
             var collectionChangeRaiseCount = 0;
             testOrder.ChildItems.CollectionChanged += (sender, e) =>
@@ -1521,17 +1528,17 @@ namespace DependenciesTracker.Tests.PathBuilding
 
             foreach (var itemIndex in replacedItemIndices)
             {
-                var newQuantity = newItemQuantities.Dequeue();
-                itemQuantities[itemIndex] = newQuantity;
+                var newQuantityDelta = newItemDeltaQuantities.Dequeue();
+                itemQuantities[itemIndex] += newQuantityDelta;
 
-                var newOrderItem = new ChildOrderItem { Quantity = newQuantity };
+                var newOrderItem = new ChildOrderItem { Quantity = itemQuantities[itemIndex] };
                 newOrderItems.Add(newOrderItem);
 
                 testOrder.ChildItems[itemIndex] = newOrderItem;
             }
 
             //Yes, the exception message is not fully correct (in the case of collectionChangeRaiseCount > itemsToReplaceCount)
-            if (collectionChangeRaiseCount != _random.Next(1, replacedItemIndices.Count))
+            if (collectionChangeRaiseCount != replacedItemIndices.Count)
                 throw new InvalidOperationException("Wrong test condition. Probably some of \"Replace\" events hasn't been raised.");
 
             var expectedChangedTotalQuantity = itemQuantities.Sum();
@@ -1983,6 +1990,7 @@ namespace DependenciesTracker.Tests.PathBuilding
 
             Assert.PropertyChanged(testOrder, "ChildItemsTotalQuantity", () =>
             {
+                // ReSharper disable once ConvertToLambdaExpression
                 testOrder.ChildItems.Insert(indexToInsertNullItem, null);
             });
 
@@ -1990,17 +1998,19 @@ namespace DependenciesTracker.Tests.PathBuilding
 
             //Then we replace null item with non-null item and trying to change its properties 
             //to ensure the new tracking has been started successfully
-            var newItemQuantityDelta = _random.Next(1, 100) * (_random.Next(0, 2) == 0 ? 1 : -1);
-            var newItemQuantity = itemQuantities[indexToInsertNullItem] + newItemQuantityDelta;
+            var newItemQuantity = _random.Next(1, 100);
             var newChildOrderItem = new ChildOrderItem { Quantity = newItemQuantity };
-            
-            testOrder.ChildItems[indexToInsertNullItem] = newChildOrderItem;
 
-            expectedTotalQuantity += newItemQuantityDelta;
-            
+            Assert.PropertyChanged(testOrder, "ChildItemsTotalQuantity", () =>
+            {
+                testOrder.ChildItems[indexToInsertNullItem] = newChildOrderItem;
+            });
+
+            expectedTotalQuantity += newItemQuantity;
+
             Assert.Equal(expectedTotalQuantity, testOrder.ChildItemsTotalQuantity);
 
-            newItemQuantityDelta = _random.Next(1, 100) * (_random.Next(0, 2) == 0 ? 1 : -1);
+            var newItemQuantityDelta = _random.Next(1, 100) * (_random.Next(0, 2) == 0 ? 1 : -1);
 
             Assert.PropertyChanged(testOrder, "ChildItemsTotalQuantity", () =>
             {

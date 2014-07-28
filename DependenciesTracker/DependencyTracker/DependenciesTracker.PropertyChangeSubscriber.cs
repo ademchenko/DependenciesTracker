@@ -110,13 +110,25 @@ namespace DependenciesTracker
                     Ancestors.Add(ancestor);
             }
 
+            private sealed class NullCollectionItemSubscriber : ISubscriberBase
+            {
+                public object EffectiveObject { get { throw new NotSupportedException("Call to EffectiveObject is not supported in NullCollectionItemSubscriber"); } }
+
+                private static readonly IList<ISubscriberBase> _emptyAncestorsList = new List<ISubscriberBase>();
+
+                [NotNull]
+                public IList<ISubscriberBase> Ancestors { get { return _emptyAncestorsList; } }
+
+                public void Dispose() { }
+            }
+
             [NotNull]
-            private IEnumerable<SubscriberBase> InitAncestors(IEnumerable items)
+            private IEnumerable<ISubscriberBase> InitAncestors(IEnumerable items)
             {
                 if (PathItem.Ancestor == null)
                     return new SubscriberBase[0];
 
-                return items.Cast<object>().Where(item => item != null).Select(item => CreateSubscriber(item, PathItem.Ancestor, OnChanged));
+                return items.Cast<object>().Select(CreateSubscriberForCollectionItem);
             }
 
             private void SubscribeToCollectionChange([NotNull] INotifyCollectionChanged notifyCollectionChange)
@@ -140,14 +152,18 @@ namespace DependenciesTracker
                 OnChanged(PathItem);
             }
 
+            private ISubscriberBase CreateSubscriberForCollectionItem(object collectionItem)
+            {
+                return collectionItem == null? new NullCollectionItemSubscriber() : (ISubscriberBase)CreateSubscriber(collectionItem, PathItem.Ancestor, OnChanged);
+            }
+
             private void UpdateAncestors(NotifyCollectionChangedEventArgs eventArgs)
             {
                 switch (eventArgs.Action)
                 {
                     case NotifyCollectionChangedAction.Add:
                         CheckIndexValid(eventArgs.NewStartingIndex, "NewStartingIndex", NotifyCollectionChangedAction.Add);
-                        Ancestors.Insert(eventArgs.NewStartingIndex,
-                            CreateSubscriber(eventArgs.NewItems.Cast<object>().Single(), PathItem.Ancestor, OnChanged));
+                        Ancestors.Insert(eventArgs.NewStartingIndex, CreateSubscriberForCollectionItem(eventArgs.NewItems.Cast<object>().Single()));
                         return;
                     case NotifyCollectionChangedAction.Remove:
                         CheckIndexValid(eventArgs.OldStartingIndex, "OldStartingIndex", NotifyCollectionChangedAction.Remove);
@@ -157,8 +173,7 @@ namespace DependenciesTracker
                     case NotifyCollectionChangedAction.Replace:
                         CheckIndexValid(eventArgs.OldStartingIndex, "OldStartingIndex", NotifyCollectionChangedAction.Replace);
                         Ancestors[eventArgs.OldStartingIndex].Dispose();
-                        Ancestors[eventArgs.OldStartingIndex] = CreateSubscriber(eventArgs.NewItems.Cast<object>().Single(),
-                            PathItem.Ancestor, OnChanged);
+                        Ancestors[eventArgs.OldStartingIndex] = CreateSubscriberForCollectionItem(eventArgs.NewItems.Cast<object>().Single());
                         return;
                     case NotifyCollectionChangedAction.Move:
                         CheckIndexValid(eventArgs.OldStartingIndex, "OldStartingIndex", NotifyCollectionChangedAction.Move);
@@ -194,7 +209,15 @@ namespace DependenciesTracker
             }
         }
 
-        private abstract class SubscriberBase : IDisposable
+        private interface ISubscriberBase : IDisposable
+        {
+            object EffectiveObject { get; }
+
+            [NotNull]
+            IList<ISubscriberBase> Ancestors { get; }
+        }
+
+        private abstract class SubscriberBase : ISubscriberBase
         {
             private readonly object _effectiveObject;
             [NotNull]
@@ -202,15 +225,15 @@ namespace DependenciesTracker
 
             protected readonly Action<PathItemBase<T>> OnChanged;
             [NotNull]
-            private readonly IList<SubscriberBase> _ancestors = new List<SubscriberBase>();
+            private readonly IList<ISubscriberBase> _ancestors = new List<ISubscriberBase>();
 
-            protected object EffectiveObject
+            public object EffectiveObject
             {
                 get { return _effectiveObject; }
             }
 
             [NotNull]
-            protected IList<SubscriberBase> Ancestors
+            public IList<ISubscriberBase> Ancestors
             {
                 get { return _ancestors; }
             }
@@ -235,11 +258,11 @@ namespace DependenciesTracker
 
             protected SubscriberBase([NotNull] object effectiveObject, [NotNull] PathItemBase<T> pathItem, [NotNull] Action<PathItemBase<T>> onChanged)
             {
-                if (effectiveObject == null) 
+                if (effectiveObject == null)
                     throw new ArgumentNullException("effectiveObject");
-                if (pathItem == null) 
+                if (pathItem == null)
                     throw new ArgumentNullException("pathItem");
-                if (onChanged == null) 
+                if (onChanged == null)
                     throw new ArgumentNullException("onChanged");
 
                 _effectiveObject = effectiveObject;
