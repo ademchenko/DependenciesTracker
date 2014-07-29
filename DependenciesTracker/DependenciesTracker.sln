@@ -9,6 +9,14 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DependenciesTracking.Tests"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DependenciesTracking.Interfaces", "DependenciesTracker.Interfaces\DependenciesTracking.Interfaces.csproj", "{7550236A-C1BD-453D-B1A9-04F3801DE307}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DependenciesTracking.Interfaces", "DependenciesTracking.Interfaces.Net40\DependenciesTracking.Interfaces.csproj", "{24A69057-7FD8-44B1-A8B8-291B77E8AFE2}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DependenciesTracking.Net40", "DependenciesTracking.Net40\DependenciesTracking.Net40.csproj", "{CAB40511-E999-43FF-B62A-141FAAF4C84D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Net40", "Net40", "{C0BA0353-AAE8-4CF9-A294-75BBBF303E47}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DependenciesTracking.Tests.Net40", "DependenciesTracking.Tests.Net40\DependenciesTracking.Tests.Net40.csproj", "{90582A92-6428-469E-B7E7-9D15B1708358}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,8 +35,25 @@ Global
 		{7550236A-C1BD-453D-B1A9-04F3801DE307}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7550236A-C1BD-453D-B1A9-04F3801DE307}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7550236A-C1BD-453D-B1A9-04F3801DE307}.Release|Any CPU.Build.0 = Release|Any CPU
+		{24A69057-7FD8-44B1-A8B8-291B77E8AFE2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{24A69057-7FD8-44B1-A8B8-291B77E8AFE2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{24A69057-7FD8-44B1-A8B8-291B77E8AFE2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{24A69057-7FD8-44B1-A8B8-291B77E8AFE2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CAB40511-E999-43FF-B62A-141FAAF4C84D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CAB40511-E999-43FF-B62A-141FAAF4C84D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CAB40511-E999-43FF-B62A-141FAAF4C84D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CAB40511-E999-43FF-B62A-141FAAF4C84D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{90582A92-6428-469E-B7E7-9D15B1708358}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{90582A92-6428-469E-B7E7-9D15B1708358}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{90582A92-6428-469E-B7E7-9D15B1708358}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{90582A92-6428-469E-B7E7-9D15B1708358}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{24A69057-7FD8-44B1-A8B8-291B77E8AFE2} = {C0BA0353-AAE8-4CF9-A294-75BBBF303E47}
+		{CAB40511-E999-43FF-B62A-141FAAF4C84D} = {C0BA0353-AAE8-4CF9-A294-75BBBF303E47}
+		{90582A92-6428-469E-B7E7-9D15B1708358} = {C0BA0353-AAE8-4CF9-A294-75BBBF303E47}
 	EndGlobalSection
 EndGlobal
