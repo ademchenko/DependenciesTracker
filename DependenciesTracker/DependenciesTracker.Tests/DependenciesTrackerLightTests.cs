@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Net;
 using DependenciesTracking.Tests.Stubs;
+using NUnit.Framework;
 using Xunit;
 
 namespace DependenciesTracking.Tests

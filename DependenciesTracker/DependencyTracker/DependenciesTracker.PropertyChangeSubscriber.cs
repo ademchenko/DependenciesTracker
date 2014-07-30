@@ -176,6 +176,7 @@ namespace DependenciesTracking
 
             private void UpdateAncestors(NotifyCollectionChangedEventArgs eventArgs)
             {
+                const NotifyCollectionChangedAction notifyCollectionChangedActionMove = (NotifyCollectionChangedAction)3;
                 switch (eventArgs.Action)
                 {
                     case NotifyCollectionChangedAction.Add:
@@ -192,9 +193,10 @@ namespace DependenciesTracking
                         Ancestors[eventArgs.OldStartingIndex].Dispose();
                         Ancestors[eventArgs.OldStartingIndex] = CreateSubscriberForCollectionItem(eventArgs.NewItems.Cast<object>().Single());
                         return;
-                    case NotifyCollectionChangedAction.Move:
-                        CheckIndexValid(eventArgs.OldStartingIndex, "OldStartingIndex", NotifyCollectionChangedAction.Move);
-                        CheckIndexValid(eventArgs.NewStartingIndex, "NewStartingIndex", NotifyCollectionChangedAction.Move);
+                    case notifyCollectionChangedActionMove:
+                        CheckIndexValid(eventArgs.OldStartingIndex, "OldStartingIndex", notifyCollectionChangedActionMove);
+                        CheckIndexValid(eventArgs.NewStartingIndex, "NewStartingIndex", notifyCollectionChangedActionMove);
+                        var str = notifyCollectionChangedActionMove.ToString();
                         var movingAncestor = Ancestors[eventArgs.OldStartingIndex];
                         Ancestors.RemoveAt(eventArgs.OldStartingIndex);
                         Ancestors.Insert(eventArgs.NewStartingIndex, movingAncestor);
