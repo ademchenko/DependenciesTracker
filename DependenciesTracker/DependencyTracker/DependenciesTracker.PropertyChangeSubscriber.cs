@@ -5,8 +5,6 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
-using System.Reactive.Disposables;
-using System.Reactive.Linq;
 using JetBrains.Annotations;
 
 namespace DependenciesTracking
@@ -63,7 +61,7 @@ namespace DependenciesTracking
             private void Subscribe([NotNull] INotifyPropertyChanged notifyPropertyChange)
             {
                 notifyPropertyChange.PropertyChanged += notifyPropertyChange_PropertyChanged;
-                _observer = Disposable.Create(() => notifyPropertyChange.PropertyChanged -= notifyPropertyChange_PropertyChanged);
+                _observer = new Disposable(() => notifyPropertyChange.PropertyChanged -= notifyPropertyChange_PropertyChanged);
 
                 //_observer = Observable.FromEventPattern<PropertyChangedEventHandler, PropertyChangedEventArgs>(
                 //    h => notifyPropertyChange.PropertyChanged += h,
@@ -146,7 +144,7 @@ namespace DependenciesTracking
                 Debug.Assert(notifyCollectionChange != null);
 
                 notifyCollectionChange.CollectionChanged += notifyCollectionChange_CollectionChanged;
-                _observer = Disposable.Create(() => notifyCollectionChange.CollectionChanged -= notifyCollectionChange_CollectionChanged);
+                _observer = new Disposable(() => notifyCollectionChange.CollectionChanged -= notifyCollectionChange_CollectionChanged);
                 //_observer = Observable
                 //    .FromEventPattern<NotifyCollectionChangedEventHandler, NotifyCollectionChangedEventArgs>(
                 //        h => notifyCollectionChange.CollectionChanged += h,

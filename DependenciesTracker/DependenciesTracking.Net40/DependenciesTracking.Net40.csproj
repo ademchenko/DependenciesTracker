@@ -33,12 +33,6 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Core" />
-    <Reference Include="System.Reactive.Core">
-      <HintPath>..\packages\Rx-Core.2.2.4\lib\net40\System.Reactive.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Reactive.Interfaces">
-      <HintPath>..\packages\Rx-Interfaces.2.2.4\lib\net40\System.Reactive.Interfaces.dll</HintPath>
-    </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="Microsoft.CSharp" />
@@ -61,6 +55,9 @@
     <Compile Include="..\DependencyTracker\DependenciesTracker.PropertyChangeSubscriber.cs">
       <Link>DependenciesTracker.PropertyChangeSubscriber.cs</Link>
     </Compile>
+    <Compile Include="..\DependencyTracker\Disposable.cs">
+      <Link>Disposable.cs</Link>
+    </Compile>
     <Compile Include="..\DependencyTracker\EnumerableExtensions.cs">
       <Link>EnumerableExtensions.cs</Link>
     </Compile>
@@ -77,9 +74,6 @@
       <Project>{24a69057-7fd8-44b1-a8b8-291b77e8afe2}</Project>
       <Name>DependenciesTracking.Interfaces</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
