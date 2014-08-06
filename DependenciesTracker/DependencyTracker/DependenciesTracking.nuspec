@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<package >
+  <metadata>
+    <id>$id$</id>
+    <version>0.1.0.0</version>
+    <title>Title</title>
+    <authors>Author</authors>
+    <owners>Author</owners>    
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>Empty</description>    
+    <copyright>Copyright 2014</copyright>    
+  </metadata>
+</package>
