@@ -34,6 +34,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="..\DependenciesTracker.Interfaces\Properties\CommonAssemblyInfo.cs">
+      <Link>Properties\CommonAssemblyInfo.cs</Link>
+    </Compile>
     <Compile Include="CollectionExtensions.cs" />
     <Compile Include="CollectionPathItem.cs" />
     <Compile Include="DependenciesMap.cs" />

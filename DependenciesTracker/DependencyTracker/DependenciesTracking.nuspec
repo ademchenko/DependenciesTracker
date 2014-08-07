@@ -2,12 +2,14 @@
 <package >
   <metadata>
     <id>$id$</id>
-    <version>0.1.0.0</version>
-    <title>Title</title>
-    <authors>Author</authors>
-    <owners>Author</owners>    
+    <version>$version$</version>
+    <title>$title$</title>
+    <authors>$author$</authors>
+    <owners>$author$</owners>    
+    <projectUrl>https://github.com/ademchenko/DependenciesTracker/</projectUrl>    
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>Empty</description>    
+    <description>$description$</description>
+    <releaseNotes>Summary of changes made in this release of the package.</releaseNotes>
     <copyright>Copyright 2014</copyright>    
   </metadata>
 </package>
