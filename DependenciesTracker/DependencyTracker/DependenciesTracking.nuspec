@@ -1,15 +1,18 @@
 <?xml version="1.0"?>
 <package >
   <metadata>
-    <id>$id$</id>
-    <version>$version$</version>
-    <title>$title$</title>
-    <authors>$author$</authors>
-    <owners>$author$</owners>
+    <id>DependenciesTracking</id>
+    <version>0.5.0.0</version>
+    <title>DependenciesTracking</title>
+    <authors>Alexander Demchenko</authors>
+    <owners>Alexander Demchenko</owners>
     <projectUrl>https://github.com/ademchenko/DependenciesTracker/</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
-    <description>$description$</description>
+    <description>Brings infrastructure for observing property paths changes and automatically updating properties that depend on that paths.</description>
     <releaseNotes>Summary of changes made in this release of the package.</releaseNotes>
     <copyright>Copyright 2014</copyright>
+    <dependencies>
+      <dependency id="DependenciesTracking.Interfaces" version="0.5.0.0" />
+    </dependencies>
   </metadata>
 </package>
