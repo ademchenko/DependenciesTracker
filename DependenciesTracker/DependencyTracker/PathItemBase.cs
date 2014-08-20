@@ -1,35 +1,30 @@
 ﻿using System;
 using System.Collections.Generic;
-using JetBrains.Annotations;
 
 namespace DependenciesTracking
 {
     internal abstract class PathItemBase<T>
     {
-        [CanBeNull]
         private readonly PathItemBase<T> _ancestor;
-        [CanBeNull]
+
         private readonly Action<T> _updateDependentPropertyOrFieldAction;
 
-        [CanBeNull]
         public PathItemBase<T> Ancestor
         {
             get { return _ancestor; }
         }
 
-        [CanBeNull]
         public Action<T> UpdateDependentPropertyOrFieldAction
         {
             get { return _updateDependentPropertyOrFieldAction; }
         }
 
-        protected PathItemBase([CanBeNull] PathItemBase<T> ancestor, [CanBeNull] Action<T> updateDependentPropertyOrFieldAction)
+        protected PathItemBase(PathItemBase<T> ancestor, Action<T> updateDependentPropertyOrFieldAction)
         {
             _ancestor = ancestor;
             _updateDependentPropertyOrFieldAction = updateDependentPropertyOrFieldAction;
         }
 
-        [NotNull]
         internal IEnumerable<string> PathStrings
         {
             get

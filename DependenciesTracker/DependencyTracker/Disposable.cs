@@ -1,5 +1,4 @@
 ﻿using System;
-using JetBrains.Annotations;
 
 namespace DependenciesTracking
 {
@@ -8,7 +7,7 @@ namespace DependenciesTracking
         private readonly Action _disposeAction;
         private bool _disposed;
 
-        public Disposable([NotNull] Action disposeAction)
+        public Disposable(Action disposeAction)
         {
             if (disposeAction == null)
                 throw new ArgumentNullException("disposeAction");

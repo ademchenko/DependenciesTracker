@@ -3,7 +3,6 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Linq;
 using DependenciesTracking.Interfaces;
-using JetBrains.Annotations;
 
 namespace DependenciesTracking.Tests.Stubs
 {
@@ -190,7 +189,7 @@ namespace DependenciesTracking.Tests.Stubs
         static Invoice()
         {
             _dependenciesMap.AddDependency(i => i.TotalCost, i => i.Orders == null ? -1 : i.Orders.Sum(o => o.Price * o.Quantity),
-                                i => DependenciesTracking.CollectionExtensions.EachElement(i.Orders).Price, 
+                                i => DependenciesTracking.CollectionExtensions.EachElement(i.Orders).Price,
                                 i => DependenciesTracking.CollectionExtensions.EachElement(i.Orders).Quantity);
         }
 
@@ -201,7 +200,6 @@ namespace DependenciesTracking.Tests.Stubs
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        [NotifyPropertyChangedInvocator]
         private void OnPropertyChanged(string propertyName)
         {
             PropertyChangedEventHandler handler = PropertyChanged;

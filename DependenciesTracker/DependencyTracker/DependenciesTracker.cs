@@ -1,19 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
-using JetBrains.Annotations;
 
 namespace DependenciesTracking
 {
     internal partial class DependenciesTracker<T> : IDisposable
     {
-        [NotNull]
         private readonly DependenciesMap<T> _map;
-        [NotNull]
+
         private readonly T _trackedObject;
-        [NotNull]
+
         private readonly IList<ISubscriberBase> _rootSubscribers = new List<ISubscriberBase>();
 
-        public DependenciesTracker([NotNull] DependenciesMap<T> map, [NotNull] T trackedObject)
+        public DependenciesTracker(DependenciesMap<T> map, T trackedObject)
         {
             if (map == null)
                 throw new ArgumentNullException("map");
@@ -36,12 +34,12 @@ namespace DependenciesTracking
             }
         }
 
-        private void OnPropertyChanged([NotNull] PathItemBase<T> subscriber)
-        {   
+        private void OnPropertyChanged(PathItemBase<T> subscriber)
+        {
             ProvokeDependentPropertiesUpdate(subscriber);
         }
 
-        private void ProvokeDependentPropertiesUpdate([CanBeNull] PathItemBase<T> pathItem)
+        private void ProvokeDependentPropertiesUpdate(PathItemBase<T> pathItem)
         {
             while (pathItem != null)
             {

@@ -5,7 +5,6 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
-using JetBrains.Annotations;
 
 namespace DependenciesTracking
 {
@@ -13,8 +12,7 @@ namespace DependenciesTracking
     {
         private sealed class RootObjectSubscriber : SubscriberBase
         {
-            public RootObjectSubscriber([NotNull] object effectiveObject, [NotNull] PathItemBase<T> pathItem,
-                [NotNull] Action<PathItemBase<T>> onChanged)
+            public RootObjectSubscriber(object effectiveObject, PathItemBase<T> pathItem, Action<PathItemBase<T>> onChanged)
                 : base(effectiveObject, pathItem, onChanged)
             {
                 Ancestors.Add(CreateSubscriber(effectiveObject, pathItem.Ancestor, onChanged));
@@ -25,14 +23,11 @@ namespace DependenciesTracking
 
         private sealed class PropertyChangeSubscriber : SubscriberBase
         {
-            [CanBeNull]
             private IDisposable _observer;
 
-            [NotNull]
             private new PropertyPathItem<T> PathItem { get { return (PropertyPathItem<T>)base.PathItem; } }
 
-            public PropertyChangeSubscriber([NotNull] object effectiveObject,
-                [NotNull] PropertyPathItem<T> pathItem, [NotNull] Action<PathItemBase<T>> onChanged)
+            public PropertyChangeSubscriber(object effectiveObject, PropertyPathItem<T> pathItem, Action<PathItemBase<T>> onChanged)
                 : base(effectiveObject, pathItem, onChanged)
             {
 
@@ -44,7 +39,6 @@ namespace DependenciesTracking
                 Ancestor = InitAncestor();
             }
 
-            [CanBeNull]
             private IDisposable InitAncestor()
             {
                 if (PathItem.Ancestor == null)
@@ -55,10 +49,9 @@ namespace DependenciesTracking
                 return ancestorEffectiveObject == null ? null : CreateSubscriber(ancestorEffectiveObject, PathItem.Ancestor, OnChanged);
             }
 
-            [CanBeNull]
             private IDisposable Ancestor { get; set; }
 
-            private void Subscribe([NotNull] INotifyPropertyChanged notifyPropertyChange)
+            private void Subscribe(INotifyPropertyChanged notifyPropertyChange)
             {
                 notifyPropertyChange.PropertyChanged += notifyPropertyChange_PropertyChanged;
                 _observer = new Disposable(() => notifyPropertyChange.PropertyChanged -= notifyPropertyChange_PropertyChanged);
@@ -104,10 +97,9 @@ namespace DependenciesTracking
                 get { return (IEnumerable)base.EffectiveObject; }
             }
 
-            [NotNull]
             private new CollectionPathItem<T> PathItem { get { return (CollectionPathItem<T>)base.PathItem; } }
 
-            public CollectionChangeSubscriber([NotNull] object effectiveObject, [NotNull] CollectionPathItem<T> pathItem, [NotNull] Action<PathItemBase<T>> onChanged)
+            public CollectionChangeSubscriber(object effectiveObject, CollectionPathItem<T> pathItem, Action<PathItemBase<T>> onChanged)
                 : base(effectiveObject, pathItem, onChanged)
             {
                 var notifyCollectionChange = effectiveObject as INotifyCollectionChanged;
@@ -124,13 +116,11 @@ namespace DependenciesTracking
 
                 private static readonly IList<ISubscriberBase> _emptyAncestorsList = new List<ISubscriberBase>();
 
-                [NotNull]
                 public IList<ISubscriberBase> Ancestors { get { return _emptyAncestorsList; } }
 
                 public void Dispose() { }
             }
 
-            [NotNull]
             private IEnumerable<ISubscriberBase> InitAncestors(IEnumerable items)
             {
                 if (PathItem.Ancestor == null)
@@ -139,7 +129,7 @@ namespace DependenciesTracking
                 return items.Cast<object>().Select(CreateSubscriberForCollectionItem);
             }
 
-            private void SubscribeToCollectionChange([NotNull] INotifyCollectionChanged notifyCollectionChange)
+            private void SubscribeToCollectionChange(INotifyCollectionChanged notifyCollectionChange)
             {
                 Debug.Assert(notifyCollectionChange != null);
 
@@ -228,18 +218,17 @@ namespace DependenciesTracking
         {
             object EffectiveObject { get; }
 
-            [NotNull]
             IList<ISubscriberBase> Ancestors { get; }
         }
 
         private abstract class SubscriberBase : ISubscriberBase
         {
             private readonly object _effectiveObject;
-            [NotNull]
+
             protected readonly PathItemBase<T> PathItem;
 
             protected readonly Action<PathItemBase<T>> OnChanged;
-            [NotNull]
+
             private readonly IList<ISubscriberBase> _ancestors = new List<ISubscriberBase>();
 
             public object EffectiveObject
@@ -247,13 +236,12 @@ namespace DependenciesTracking
                 get { return _effectiveObject; }
             }
 
-            [NotNull]
             public IList<ISubscriberBase> Ancestors
             {
                 get { return _ancestors; }
             }
 
-            public static SubscriberBase CreateSubscriber([NotNull] object effectiveObject, [NotNull] PathItemBase<T> pathItem, [NotNull] Action<PathItemBase<T>> onChanged)
+            public static SubscriberBase CreateSubscriber(object effectiveObject, PathItemBase<T> pathItem, Action<PathItemBase<T>> onChanged)
             {
                 var propertyPathItem = pathItem as PropertyPathItem<T>;
                 if (propertyPathItem != null)
@@ -271,7 +259,7 @@ namespace DependenciesTracking
                 throw new ArgumentException(string.Format("Unknown path item type: {0}", pathItem.GetType()), "pathItem");
             }
 
-            protected SubscriberBase([NotNull] object effectiveObject, [NotNull] PathItemBase<T> pathItem, [NotNull] Action<PathItemBase<T>> onChanged)
+            protected SubscriberBase(object effectiveObject, PathItemBase<T> pathItem, Action<PathItemBase<T>> onChanged)
             {
                 if (effectiveObject == null)
                     throw new ArgumentNullException("effectiveObject");

@@ -5,20 +5,15 @@ using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
 using DependenciesTracking.Interfaces;
-using JetBrains.Annotations;
-
 
 namespace DependenciesTracking
 {
     public sealed class DependenciesMap<T> : IDependenciesMap<T>
     {
-        [NotNull]
         private readonly IList<PathItemBase<T>> _mapItems = new List<PathItemBase<T>>();
 
-        [NotNull]
         private readonly ReadOnlyCollection<PathItemBase<T>> _readOnlyMapItems;
 
-        [NotNull]
         internal ReadOnlyCollection<PathItemBase<T>> MapItems
         {
             get { return _readOnlyMapItems; }
@@ -29,14 +24,12 @@ namespace DependenciesTracking
             _readOnlyMapItems = new ReadOnlyCollection<PathItemBase<T>>(_mapItems);
         }
 
-        [NotNull]
-        public IDependenciesMap<T> AddDependency<U>([NotNull] Action<T, U> setter, [NotNull] Func<T, U> calculator, Expression<Func<T, object>> obligatoryDependencyPath, [NotNull] params Expression<Func<T, object>>[] dependencyPaths)
+        public IDependenciesMap<T> AddDependency<U>(Action<T, U> setter, Func<T, U> calculator, Expression<Func<T, object>> obligatoryDependencyPath, params Expression<Func<T, object>>[] dependencyPaths)
         {
             if (setter == null)
                 throw new ArgumentNullException("setter");
             if (calculator == null)
                 throw new ArgumentNullException("calculator");
-
 
             foreach (var builtPath in BuildPaths(dependencyPaths.StartWith(obligatoryDependencyPath), o => setter(o, calculator(o))))
                 _mapItems.Add(builtPath);
@@ -44,9 +37,9 @@ namespace DependenciesTracking
             return this;
         }
 
-        [NotNull]
-        public IDependenciesMap<T> AddDependency<U>([NotNull] Expression<Func<T, U>> dependentProperty, [NotNull] Func<T, U> calculator,
-            [NotNull] Expression<Func<T, object>> obligatoryDependencyPath, [NotNull] params Expression<Func<T, object>>[] dependencyPaths)
+        public IDependenciesMap<T> AddDependency<U>(Expression<Func<T, U>> dependentProperty, Func<T, U> calculator,
+                                                    Expression<Func<T, object>> obligatoryDependencyPath,
+                                                    params Expression<Func<T, object>>[] dependencyPaths)
         {
             if (dependentProperty == null)
                 throw new ArgumentNullException("dependentProperty");
@@ -56,8 +49,7 @@ namespace DependenciesTracking
             return AddDependency(BuildSetter(dependentProperty), calculator, obligatoryDependencyPath, dependencyPaths);
         }
 
-        [NotNull]
-        private static Action<T, U> BuildSetter<U>([NotNull] Expression<Func<T, U>> dependentProperty)
+        private static Action<T, U> BuildSetter<U>(Expression<Func<T, U>> dependentProperty)
         {
             Debug.Assert(dependentProperty.Body != null);
 
@@ -85,9 +77,7 @@ namespace DependenciesTracking
                     notSuppportedExpression));
         }
 
-        [NotNull]
-        private static IEnumerable<PathItemBase<T>> BuildPaths([NotNull] IEnumerable<Expression<Func<T, object>>> dependencyPaths,
-            [NotNull] Action<T> calculateAndSet)
+        private static IEnumerable<PathItemBase<T>> BuildPaths(IEnumerable<Expression<Func<T, object>>> dependencyPaths, Action<T> calculateAndSet)
         {
             if (calculateAndSet == null)
                 throw new ArgumentNullException("calculateAndSet");
@@ -95,8 +85,7 @@ namespace DependenciesTracking
             return dependencyPaths.Select(pathExpression => BuildPath(pathExpression, calculateAndSet)).ToList();
         }
 
-        [NotNull]
-        private static PathItemBase<T> BuildPath([NotNull] Expression<Func<T, object>> pathExpession, Action<T> calculateAndSet)
+        private static PathItemBase<T> BuildPath(Expression<Func<T, object>> pathExpession, Action<T> calculateAndSet)
         {
             var convertExpression = pathExpession.Body as UnaryExpression;
             if (convertExpression != null &&
@@ -145,8 +134,7 @@ namespace DependenciesTracking
             return rootPathItem;
         }
 
-        [NotNull]
-        private static Func<object, object> BuildGetter([NotNull] Type parameterType, [NotNull] string propertyOrFieldName)
+        private static Func<object, object> BuildGetter(Type parameterType, string propertyOrFieldName)
         {
             var parameter = Expression.Parameter(typeof(object), "obj");
             var convertedParameter = Expression.Convert(parameter, parameterType);
@@ -160,7 +148,7 @@ namespace DependenciesTracking
 
         }
 
-        public IDisposable StartTracking([NotNull] T trackedObject)
+        public IDisposable StartTracking(T trackedObject)
         {
             return new DependenciesTracker<T>(this, trackedObject);
         }

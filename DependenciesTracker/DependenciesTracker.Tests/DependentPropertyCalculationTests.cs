@@ -5,7 +5,6 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
-using JetBrains.Annotations;
 using Xunit;
 
 namespace DependenciesTracking.Tests
@@ -39,7 +38,6 @@ namespace DependenciesTracking.Tests
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        [NotifyPropertyChangedInvocator]
         private void OnPropertyChanged(string propertyName)
         {
             var handler = PropertyChanged;
@@ -252,7 +250,6 @@ namespace DependenciesTracking.Tests
 
         public event PropertyChangedEventHandler PropertyChanged;
 
-        [NotifyPropertyChangedInvocator]
         private void OnPropertyChanged(string propertyName)
         {
             var handler = PropertyChanged;
@@ -305,7 +302,6 @@ namespace DependenciesTracking.Tests
 
     public class DependentPropertyCalculationTests
     {
-        [NotNull]
         private static readonly Random _random = new Random();
 
         [Fact]

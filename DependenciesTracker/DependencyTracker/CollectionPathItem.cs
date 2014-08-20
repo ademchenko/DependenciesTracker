@@ -1,11 +1,10 @@
 ﻿using System;
-using JetBrains.Annotations;
 
 namespace DependenciesTracking
 {
     internal class CollectionPathItem<T> : PathItemBase<T>
     {
-        public CollectionPathItem([CanBeNull] PathItemBase<T> ancestor, [CanBeNull] Action<T> updateDependentPropertyOrFieldAction)
+        public CollectionPathItem(PathItemBase<T> ancestor, Action<T> updateDependentPropertyOrFieldAction)
             : base(ancestor, updateDependentPropertyOrFieldAction) { }
 
         protected override string StringRep

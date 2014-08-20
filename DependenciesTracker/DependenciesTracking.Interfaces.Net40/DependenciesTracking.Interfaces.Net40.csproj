@@ -43,9 +43,6 @@
     <Compile Include="..\DependenciesTracker.Interfaces\IDependenciesMap.cs">
       <Link>IDependenciesMap.cs</Link>
     </Compile>
-    <Compile Include="..\DependenciesTracker.Interfaces\JetBrains\Annotations.cs">
-      <Link>JetBrains\Annotations.cs</Link>
-    </Compile>
     <Compile Include="..\DependenciesTracker.Interfaces\Properties\CommonAssemblyInfo.cs">
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
