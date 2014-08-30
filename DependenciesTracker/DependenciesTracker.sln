@@ -17,6 +17,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Net40", "Net40", "{C0BA0353
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DependenciesTracking.Tests.Net40", "DependenciesTracking.Tests.Net40\DependenciesTracking.Tests.Net40.csproj", "{90582A92-6428-469E-B7E7-9D15B1708358}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{71AF2E67-67BE-4D9D-952D-305390E7ECF3}"
+	ProjectSection(SolutionItems) = preProject
+		nugetpackbuilder.bat = nugetpackbuilder.bat
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>DependenciesTracking</id>
-    <version>0.8.0.0</version>
+    <version>0.10.0.0</version>
     <title>DependenciesTracking</title>
     <authors>Alexander Demchenko</authors>
     <owners>Alexander Demchenko</owners>
@@ -12,7 +12,7 @@
     <releaseNotes>Summary of changes made in this release of the package.</releaseNotes>
     <copyright>Copyright 2014</copyright>
     <dependencies>
-      <dependency id="DependenciesTracking.Interfaces" version="0.8.0.0" />
+      <dependency id="DependenciesTracking.Interfaces" version="0.10.0.0" />
     </dependencies>
   </metadata>
 </package>

@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>DependenciesTracking.Interfaces</id>
-    <version>0.8.0.0</version>
+    <version>0.10.0.0</version>
     <title>DependenciesTracking.Interfaces</title>
     <authors>Alexander Demchenko</authors>
     <owners>Alexander Demchenko</owners>
