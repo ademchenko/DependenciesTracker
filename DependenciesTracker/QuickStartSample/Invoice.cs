@@ -70,7 +70,7 @@ namespace QuickStartSample
 
         public DelegateCommand DeleteOrderCommand
         {
-            get { return _deleteOrderCommand ?? (_addNewOrderCommand = new DelegateCommand(DeleteOrderImpl)); }
+            get { return _deleteOrderCommand ?? (_deleteOrderCommand = new DelegateCommand(DeleteOrderImpl)); }
         }
 
         private void DeleteOrderImpl(object parameter)
