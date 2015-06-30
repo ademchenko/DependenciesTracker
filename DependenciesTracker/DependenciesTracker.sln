@@ -1,15 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.30723.0
+VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DependenciesTracking", "DependencyTracker\DependenciesTracking.csproj", "{7E789C4F-029D-460F-9F77-F48757B76E7F}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DependenciesTracking.Tests", "DependenciesTracker.Tests\DependenciesTracking.Tests.csproj", "{F92C9CF9-13B5-4586-B674-3D2187A82584}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DependenciesTracking.Interfaces", "DependenciesTracker.Interfaces\DependenciesTracking.Interfaces.csproj", "{7550236A-C1BD-453D-B1A9-04F3801DE307}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DependenciesTracking.Interfaces.Net40", "DependenciesTracking.Interfaces.Net40\DependenciesTracking.Interfaces.Net40.csproj", "{24A69057-7FD8-44B1-A8B8-291B77E8AFE2}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DependenciesTracking.Net40", "DependenciesTracking.Net40\DependenciesTracking.Net40.csproj", "{CAB40511-E999-43FF-B62A-141FAAF4C84D}"
 EndProject
@@ -38,14 +34,6 @@ Global
 		{F92C9CF9-13B5-4586-B674-3D2187A82584}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{F92C9CF9-13B5-4586-B674-3D2187A82584}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{F92C9CF9-13B5-4586-B674-3D2187A82584}.Release|Any CPU.Build.0 = Release|Any CPU
-		{7550236A-C1BD-453D-B1A9-04F3801DE307}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{7550236A-C1BD-453D-B1A9-04F3801DE307}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{7550236A-C1BD-453D-B1A9-04F3801DE307}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{7550236A-C1BD-453D-B1A9-04F3801DE307}.Release|Any CPU.Build.0 = Release|Any CPU
-		{24A69057-7FD8-44B1-A8B8-291B77E8AFE2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{24A69057-7FD8-44B1-A8B8-291B77E8AFE2}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{24A69057-7FD8-44B1-A8B8-291B77E8AFE2}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{24A69057-7FD8-44B1-A8B8-291B77E8AFE2}.Release|Any CPU.Build.0 = Release|Any CPU
 		{CAB40511-E999-43FF-B62A-141FAAF4C84D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{CAB40511-E999-43FF-B62A-141FAAF4C84D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CAB40511-E999-43FF-B62A-141FAAF4C84D}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -63,7 +51,6 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{24A69057-7FD8-44B1-A8B8-291B77E8AFE2} = {C0BA0353-AAE8-4CF9-A294-75BBBF303E47}
 		{CAB40511-E999-43FF-B62A-141FAAF4C84D} = {C0BA0353-AAE8-4CF9-A294-75BBBF303E47}
 		{90582A92-6428-469E-B7E7-9D15B1708358} = {C0BA0353-AAE8-4CF9-A294-75BBBF303E47}
 	EndGlobalSection

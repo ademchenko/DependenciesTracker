@@ -2,7 +2,6 @@
 using System.Runtime.CompilerServices;
 using DependenciesTracking;
 using DependenciesTracking.Interfaces;
-using QuickStartSample.Annotations;
 
 namespace QuickStartSample
 {
@@ -83,9 +82,8 @@ namespace QuickStartSample
         }
 
         public event PropertyChangedEventHandler PropertyChanged;
-
-        [NotifyPropertyChangedInvocator]
-        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        
+        protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
         {
             var handler = PropertyChanged;
             if (handler != null) handler(this, new PropertyChangedEventArgs(propertyName));

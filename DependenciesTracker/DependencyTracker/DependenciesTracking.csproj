@@ -34,9 +34,6 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="..\DependenciesTracker.Interfaces\Properties\CommonAssemblyInfo.cs">
-      <Link>Properties\CommonAssemblyInfo.cs</Link>
-    </Compile>
     <Compile Include="CollectionExtensions.cs" />
     <Compile Include="CollectionPathItem.cs" />
     <Compile Include="DependenciesMap.cs" />
@@ -44,15 +41,10 @@
     <Compile Include="DependenciesTracker.PropertyChangeSubscriber.cs" />
     <Compile Include="Disposable.cs" />
     <Compile Include="EnumerableExtensions.cs" />
+    <Compile Include="IDependenciesMap.cs" />
     <Compile Include="PathItemBase.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="PropertyPathItem.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\DependenciesTracker.Interfaces\DependenciesTracking.Interfaces.csproj">
-      <Project>{7550236A-C1BD-453D-B1A9-04F3801DE307}</Project>
-      <Name>DependenciesTracking.Interfaces</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <None Include="DependenciesTracking.nuspec" />

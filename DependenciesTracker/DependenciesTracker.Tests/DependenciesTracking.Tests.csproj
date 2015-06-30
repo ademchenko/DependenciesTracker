@@ -48,9 +48,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\DependenciesTracker.Interfaces\Properties\CommonAssemblyInfo.cs">
-      <Link>Properties\CommonAssemblyInfo.cs</Link>
-    </Compile>
     <Compile Include="DependenciesTrackerLightTests.cs" />
     <Compile Include="DependentPropertyCalculationTests.cs" />
     <Compile Include="PathBuildingTests.cs" />
@@ -62,10 +59,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DependenciesTracker.Interfaces\DependenciesTracking.Interfaces.csproj">
-      <Project>{7550236a-c1bd-453d-b1a9-04f3801de307}</Project>
-      <Name>DependenciesTracking.Interfaces</Name>
-    </ProjectReference>
     <ProjectReference Include="..\DependencyTracker\DependenciesTracking.csproj">
       <Project>{7e789c4f-029d-460f-9f77-f48757b76e7f}</Project>
       <Name>DependenciesTracking</Name>
