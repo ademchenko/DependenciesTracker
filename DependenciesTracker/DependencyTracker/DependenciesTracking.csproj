@@ -33,6 +33,12 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <SignAssembly>true</SignAssembly>
+  </PropertyGroup>
+  <PropertyGroup>
+    <AssemblyOriginatorKeyFile>..\DependenciesTracking.snk</AssemblyOriginatorKeyFile>
+  </PropertyGroup>
   <ItemGroup>
     <Compile Include="CollectionExtensions.cs" />
     <Compile Include="CollectionPathItem.cs" />
@@ -47,6 +53,9 @@
     <Compile Include="PropertyPathItem.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\DependenciesTracking.snk">
+      <Link>DependenciesTracking.snk</Link>
+    </None>
     <None Include="DependenciesTracking.nuspec" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
