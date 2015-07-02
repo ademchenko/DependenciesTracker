@@ -24,14 +24,20 @@ namespace DependenciesTracking
             _readOnlyMapItems = new ReadOnlyCollection<PathItemBase<T>>(_mapItems);
         }
 
-        public IDependenciesMap<T> AddDependency<U>(Action<T, U> setter, Func<T, U> calculator, Expression<Func<T, object>> obligatoryDependencyPath, params Expression<Func<T, object>>[] dependencyPaths)
+        public IDependenciesMap<T> AddDependency<U>(Action<T, U> dependentPropertySetter, Func<T, U> calculator, Expression<Func<T, object>> obligatoryDependencyPath, params Expression<Func<T, object>>[] dependencyPaths)
         {
-            if (setter == null)
-                throw new ArgumentNullException("setter");
+            if (dependentPropertySetter == null)
+                throw new ArgumentNullException("dependentPropertySetter");
             if (calculator == null)
                 throw new ArgumentNullException("calculator");
+            if (obligatoryDependencyPath == null)
+                throw new ArgumentNullException("obligatoryDependencyPath");
+            if (dependencyPaths == null) 
+                throw new ArgumentNullException("dependencyPaths");
+            if (dependencyPaths.Any(p => p == null))
+                throw new ArgumentException("On of items in dependencyPaths is null.");
 
-            foreach (var builtPath in BuildPaths(dependencyPaths.StartWith(obligatoryDependencyPath), o => setter(o, calculator(o))))
+            foreach (var builtPath in BuildPaths(dependencyPaths.StartWith(obligatoryDependencyPath), o => dependentPropertySetter(o, calculator(o))))
                 _mapItems.Add(builtPath);
 
             return this;
@@ -43,8 +49,6 @@ namespace DependenciesTracking
         {
             if (dependentProperty == null)
                 throw new ArgumentNullException("dependentProperty");
-            if (obligatoryDependencyPath == null)
-                throw new ArgumentNullException("obligatoryDependencyPath");
 
             return AddDependency(BuildSetter(dependentProperty), calculator, obligatoryDependencyPath, dependencyPaths);
         }
