@@ -18,8 +18,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		nugetpackbuilder.bat = nugetpackbuilder.bat
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuickStartSample", "QuickStartSample\QuickStartSample.csproj", "{17041463-5FB0-42A8-8553-8F616CA9302B}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -42,10 +40,6 @@ Global
 		{90582A92-6428-469E-B7E7-9D15B1708358}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{90582A92-6428-469E-B7E7-9D15B1708358}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{90582A92-6428-469E-B7E7-9D15B1708358}.Release|Any CPU.Build.0 = Release|Any CPU
-		{17041463-5FB0-42A8-8553-8F616CA9302B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{17041463-5FB0-42A8-8553-8F616CA9302B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{17041463-5FB0-42A8-8553-8F616CA9302B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{17041463-5FB0-42A8-8553-8F616CA9302B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
