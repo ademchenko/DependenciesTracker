@@ -35,8 +35,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="DependenciesTracking">
-      <HintPath>..\packages\DependenciesTracking.0.13.0.0\lib\net40\DependenciesTracking.dll</HintPath>
+    <Reference Include="DependenciesTracking, Version=1.0.1.0, Culture=neutral, PublicKeyToken=960b356d083292a1, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\packages\DependenciesTracking.1.0.1.0\lib\net40\DependenciesTracking.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Xml" />

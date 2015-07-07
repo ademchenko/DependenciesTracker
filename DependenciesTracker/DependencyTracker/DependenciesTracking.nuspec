@@ -2,7 +2,7 @@
 <package >
   <metadata>
     <id>DependenciesTracking</id>
-    <version>1.0.0.0</version>
+    <version>1.0.1.0</version>
     <title>DependenciesTracking</title>
     <authors>Alexander Demchenko</authors>
     <owners>Alexander Demchenko</owners>
