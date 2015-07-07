@@ -6,7 +6,7 @@ DependenciesTracking is a .NET library that implements the tracking of dependent
 * [Collection item dependencies](https://github.com/ademchenko/DependenciesTracker/wiki#collection-item-dependencies) (like _TotalCost = Orders.Sum(o => o.Price * o.Quantity)_)
 
 ### Downloads
-The stable covered with tests release 1.0 version can be installed through the NuGet.
+The stable covered with tests release 1.0.1 version can be installed through the NuGet.
 https://www.nuget.org/packages/DependenciesTracking/
 ```
 PM> Install-Package DependenciesTracking
