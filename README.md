@@ -11,3 +11,6 @@ https://www.nuget.org/packages/DependenciesTracking/
 ```
 PM> Install-Package DependenciesTracking
 ```
+
+### Documentation
+A quick start article about Dependencies Tracker can be found [here](https://github.com/ademchenko/DependenciesTracker/wiki).
