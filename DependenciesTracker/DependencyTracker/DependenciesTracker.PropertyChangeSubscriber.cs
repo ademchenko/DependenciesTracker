@@ -17,8 +17,6 @@ namespace DependenciesTracking
             {
                 Ancestors.Add(CreateSubscriber(effectiveObject, pathItem.Ancestor, onChanged));
             }
-
-            public override void Dispose() { }
         }
 
         private sealed class PropertyChangeSubscriber : SubscriberBase
@@ -30,16 +28,18 @@ namespace DependenciesTracking
             public PropertyChangeSubscriber(object effectiveObject, PropertyPathItem<T> pathItem, Action<PathItemBase<T>> onChanged)
                 : base(effectiveObject, pathItem, onChanged)
             {
-
                 var notifyPropertyChange = effectiveObject as INotifyPropertyChanged;
 
                 if (notifyPropertyChange != null)
                     Subscribe(notifyPropertyChange);
 
-                Ancestor = InitAncestor();
+                var ancestor = InitAncestor();
+                if (ancestor != null)
+                    Ancestors.Add(ancestor);
+
             }
 
-            private IDisposable InitAncestor()
+            private ISubscriberBase InitAncestor()
             {
                 if (PathItem.Ancestor == null)
                     return null;
@@ -48,8 +48,6 @@ namespace DependenciesTracking
 
                 return ancestorEffectiveObject == null ? null : CreateSubscriber(ancestorEffectiveObject, PathItem.Ancestor, OnChanged);
             }
-
-            private IDisposable Ancestor { get; set; }
 
             private void Subscribe(INotifyPropertyChanged notifyPropertyChange)
             {
@@ -71,11 +69,10 @@ namespace DependenciesTracking
 
             private void OnObservedPropertyChanged()
             {
-
-                if (Ancestor != null)
-                    Ancestor.Dispose();
-
-                Ancestor = InitAncestor();
+                DisposeAndClearAncestors();
+                var ancestor = InitAncestor();
+                if (ancestor != null)
+                    Ancestors.Add(ancestor);
                 OnChanged(PathItem);
             }
 
@@ -83,8 +80,8 @@ namespace DependenciesTracking
             {
                 if (_observer != null)
                     _observer.Dispose();
-                if (Ancestor != null)
-                    Ancestor.Dispose();
+
+                base.Dispose();
             }
         }
 
@@ -188,8 +185,7 @@ namespace DependenciesTracking
                         Ancestors.Insert(eventArgs.NewStartingIndex, movingAncestor);
                         return;
                     case NotifyCollectionChangedAction.Reset:
-                        foreach (var ancestor in Ancestors)
-                            ancestor.Dispose();
+                        DisposeAndClearAncestors();
                         foreach (var ancestor in InitAncestors(EffectiveObject))
                             Ancestors.Add(ancestor);
                         return;
@@ -209,8 +205,7 @@ namespace DependenciesTracking
                 if (_observer != null)
                     _observer.Dispose();
 
-                foreach (var ancestor in Ancestors)
-                    ancestor.Dispose();
+                base.Dispose();
             }
         }
 
@@ -273,7 +268,18 @@ namespace DependenciesTracking
                 OnChanged = onChanged;
             }
 
-            public abstract void Dispose();
+            public virtual void Dispose()
+            {
+                DisposeAndClearAncestors();
+            }
+
+            protected void DisposeAndClearAncestors()
+            {
+                foreach (var ancestor in Ancestors)
+                    ancestor.Dispose();
+
+                Ancestors.Clear();
+            }
         }
     }
 }

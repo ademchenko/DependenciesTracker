@@ -1860,6 +1860,191 @@ namespace DependenciesTracking.Tests
         }
 
         [Fact]
+        public void CollectionProperty_Reset_CorrectCalculation_NewlyAddedItemsAreProperlyTracked()
+        {
+            var dependenciesMap = new DependenciesMap<TestOrder>()
+                                        .AddDependency(o => o.ChildItemsTotalQuantity, o => o.ChildItems.Sum(i => i.Quantity),
+                                            o => DependenciesTracking.CollectionExtensions.EachElement(o.ChildItems).Quantity);
+
+            var itemsCount = _random.Next(2, 6);
+            var itemQuantities = Enumerable.Range(0, itemsCount).Select(_ => _random.Next(0, 100)).ToList();
+
+            var initiallyExpectedTotalQuantity = itemQuantities.Sum();
+
+            var childOrderItems = itemQuantities.Select(q => new ChildOrderItem { Quantity = q }).ToList();
+
+            var testOrder = new TestOrder
+            {
+                ChildItems = new ObservableCollection<ChildOrderItem>(childOrderItems)
+            };
+
+            Assert.Equal(0, testOrder.ChildItemsTotalQuantity);
+
+            dependenciesMap.StartTracking(testOrder);
+
+            Assert.Equal(initiallyExpectedTotalQuantity, testOrder.ChildItemsTotalQuantity);
+
+            var collectionChangedRaised = false;
+            testOrder.ChildItems.CollectionChanged += (sender, e) => { collectionChangedRaised = true; };
+
+            testOrder.ChildItems.Clear();
+
+            if (!collectionChangedRaised)
+                throw new InvalidOperationException("Wrong test condition. \"Reset\" event is not raised.");
+
+            CheckExpectedQuantityChanged(initiallyExpectedTotalQuantity, 0);
+
+            Assert.Equal(0, testOrder.ChildItemsTotalQuantity);
+
+            var newlyAddedChildOrderItem = new ChildOrderItem { Price = 1, Quantity = 2 };
+
+            testOrder.ChildItems.Add(newlyAddedChildOrderItem);
+
+            Assert.Equal(2, testOrder.ChildItemsTotalQuantity);
+
+            testOrder.ChildItems.RemoveAt(0);
+
+            Assert.Equal(0, testOrder.ChildItemsTotalQuantity);
+
+            //Check that orphans are not tracked
+            testOrder.PropertyChanged += (_, args) =>
+            {
+                Debug.Assert(args.PropertyName == "ChildItemsTotalQuantity");
+                Assert.False(true, "Changing dependent property ChildItemsTotalQuantity is not expected.");
+            };
+
+            newlyAddedChildOrderItem.Price = 4;
+            childOrderItems.ForEach(i => { i.Price++; i.Quantity++; });
+        }
+
+        [Fact]
+        public void CollectionProperty_DisposedTrackerShouldntTrackPathsAndUpdateDependentProperties()
+        {
+            var dependenciesMap = new DependenciesMap<TestOrder>()
+                                          .AddDependency(o => o.ChildItemsTotalCost, o => o.ChildItems.Sum(i => i.Quantity * i.Price),
+                                              o => DependenciesTracking.CollectionExtensions.EachElement(o.ChildItems).Quantity,
+                                              o => DependenciesTracking.CollectionExtensions.EachElement(o.ChildItems).Price);
+
+            var initialChildOrderItem = new ChildOrderItem { Price = 10, Quantity = 3 };
+            var initialCost = initialChildOrderItem.Price * initialChildOrderItem.Quantity;
+
+            var childOrderItems = new[] { initialChildOrderItem };
+
+            var testOrder = new TestOrder
+            {
+                ChildItems = new ObservableCollection<ChildOrderItem>(childOrderItems)
+            };
+
+            Assert.Equal(0, testOrder.ChildItemsTotalQuantity);
+
+            var tracker = dependenciesMap.StartTracking(testOrder);
+
+            Assert.Equal(initialCost, testOrder.ChildItemsTotalCost);
+
+            tracker.Dispose();
+            var allowedToChangeDependentProperty = false;
+
+            //Check that tracker doesn't change dependent properties after dispose
+            testOrder.PropertyChanged += (_, args) =>
+            {
+                Debug.Assert(args.PropertyName == "ChildItemsTotalCost");
+                Assert.False(!allowedToChangeDependentProperty, "Changing dependent property ChildItemsTotalQuantity is not expected.");
+            };
+
+            var newlyAddedChildOrderItem = new ChildOrderItem { Price = 1, Quantity = 2 };
+            //Trying to add new item into the collection...
+            testOrder.ChildItems.Add(newlyAddedChildOrderItem);
+            //Above changes doesn't have an influence on dependent property since the tracker is disposed
+            Assert.Equal(initialCost, testOrder.ChildItemsTotalCost);
+            
+            //then change its properties
+            newlyAddedChildOrderItem.Price++;
+            newlyAddedChildOrderItem.Quantity++;
+
+            //Above changes doesn't have an influence on dependent property since the tracker is disposed
+            Assert.Equal(initialCost, testOrder.ChildItemsTotalCost);
+
+            //Now starting tracking again
+            allowedToChangeDependentProperty = true;
+            dependenciesMap.StartTracking(testOrder);
+
+            Assert.Equal(initialCost + 2 * 3, testOrder.ChildItemsTotalCost);
+
+            //Trying to change change last item properties
+            newlyAddedChildOrderItem.Price++;
+            //Now tracker should track again
+            Assert.Equal(initialCost + 3 * 3, testOrder.ChildItemsTotalCost);
+            newlyAddedChildOrderItem.Quantity++;
+            //Now tracker should track again
+            Assert.Equal(initialCost + 3 * 4, testOrder.ChildItemsTotalCost);
+        }
+
+        [Fact]
+        public void SimplePropertyChain_DisposedTrackerShouldntTrackPathsAndUpdateDependentProperties()
+        {
+            var dependenciesMap = new DependenciesMap<TestOrder>()
+                                          .AddDependency(o => o.ChildItemsTotalCost, o => o.ChildItem.Price * o.ChildItem.Quantity,
+                                              o => o.ChildItem.Quantity,
+                                              o => o.ChildItem.Price);
+
+            var initialChildOrderItem = new ChildOrderItem { Price = 10, Quantity = 3 };
+            var initialCost = initialChildOrderItem.Price * initialChildOrderItem.Quantity;
+
+            var testOrder = new TestOrder { ChildItem = initialChildOrderItem };
+
+            Assert.Equal(0, testOrder.ChildItemsTotalQuantity);
+
+            var tracker = dependenciesMap.StartTracking(testOrder);
+
+            Assert.Equal(initialCost, testOrder.ChildItemsTotalCost);
+
+            tracker.Dispose();
+
+            var allowedToChangeDependentProperty = false;
+
+            //Check that tracker doesn't change dependent properties after dispose
+            testOrder.PropertyChanged += (_, args) =>
+            {
+                if (args.PropertyName == "ChildItemsTotalQuantity" && !allowedToChangeDependentProperty)
+                    Assert.False(true, "Changing dependent property ChildItemsTotalQuantity is not expected.");
+            };
+
+            var newlyAddedChildOrderItem = new ChildOrderItem { Price = 1, Quantity = 2 };
+
+            //Trying to change order item...
+            testOrder.ChildItem = newlyAddedChildOrderItem;
+
+            //then its properties
+            testOrder.ChildItem.Price++;
+            testOrder.ChildItem.Quantity++;
+
+            //Above changes doesn't have an influence on dependent property since the tracker is disposed
+            Assert.Equal(initialCost, testOrder.ChildItemsTotalCost);
+
+            //Now starting tracking again
+            allowedToChangeDependentProperty = true;
+            dependenciesMap.StartTracking(testOrder);
+
+            Assert.Equal(2 * 3, testOrder.ChildItemsTotalCost);
+
+            //Now, trying to change order item...
+            newlyAddedChildOrderItem = new ChildOrderItem { Price = 5, Quantity = 6 };
+            testOrder.ChildItem = newlyAddedChildOrderItem;
+
+            //And dependent property has been recalculated
+            Assert.Equal(5 * 6, testOrder.ChildItemsTotalCost);
+
+            //Then trying to change order item properties
+            newlyAddedChildOrderItem.Price = 7;
+            //And dependent property has been recalculated
+            Assert.Equal(7 * 6, testOrder.ChildItemsTotalCost);
+
+            newlyAddedChildOrderItem.Quantity = 12;
+            //And dependent property has been recalculated
+            Assert.Equal(7 * 12, testOrder.ChildItemsTotalCost);
+        }
+
+        [Fact]
         public void CollectionProperty_CollectionChanged_NewCollectionItemsAreTracked()
         {
             var dependenciesMap = new DependenciesMap<TestOrder>()
