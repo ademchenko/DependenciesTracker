@@ -1930,10 +1930,7 @@ namespace DependenciesTracking.Tests
 
             var childOrderItems = new[] { initialChildOrderItem };
 
-            var testOrder = new TestOrder
-            {
-                ChildItems = new ObservableCollection<ChildOrderItem>(childOrderItems)
-            };
+            var testOrder = new TestOrder { ChildItems = new ObservableCollection<ChildOrderItem>(childOrderItems) };
 
             Assert.Equal(0, testOrder.ChildItemsTotalQuantity);
 
@@ -1947,16 +1944,20 @@ namespace DependenciesTracking.Tests
             //Check that tracker doesn't change dependent properties after dispose
             testOrder.PropertyChanged += (_, args) =>
             {
-                Debug.Assert(args.PropertyName == "ChildItemsTotalCost");
-                Assert.False(!allowedToChangeDependentProperty, "Changing dependent property ChildItemsTotalQuantity is not expected.");
+                if (args.PropertyName == "ChildItemsTotalCost")
+                    Assert.False(!allowedToChangeDependentProperty, "Changing dependent property ChildItemsTotalQuantity is not expected.");
             };
+            //Trying to set the new collection
+            testOrder.ChildItems = new ObservableCollection<ChildOrderItem>(childOrderItems);
+            //Above changes doesn't have an influence on dependent property since the tracker is disposed
+            Assert.Equal(initialCost, testOrder.ChildItemsTotalCost);
 
             var newlyAddedChildOrderItem = new ChildOrderItem { Price = 1, Quantity = 2 };
             //Trying to add new item into the collection...
             testOrder.ChildItems.Add(newlyAddedChildOrderItem);
             //Above changes doesn't have an influence on dependent property since the tracker is disposed
             Assert.Equal(initialCost, testOrder.ChildItemsTotalCost);
-            
+
             //then change its properties
             newlyAddedChildOrderItem.Price++;
             newlyAddedChildOrderItem.Quantity++;
