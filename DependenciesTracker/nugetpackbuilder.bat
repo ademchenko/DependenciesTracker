@@ -4,7 +4,7 @@ xcopy /Y DependenciesTracking.Net40\bin\Release\DependenciesTracking.dll NuGetPa
 xcopy /Y DependencyTracker\DependenciesTracking.nuspec NuGetPackaging\DependenciesTracker\*
 cd NuGetPackaging
 nuget pack DependenciesTracker\DependenciesTracking.nuspec
-for %%a in (DependenciesTracking.*.nupkg) do nuget push "%%a"
+for %%a in (DependenciesTracking.*.nupkg) do nuget push "%%a" -Source https://www.nuget.org/api/v2/package
 ren "*.nupkg" "*.nupkg-pushed"
 
 cd..
