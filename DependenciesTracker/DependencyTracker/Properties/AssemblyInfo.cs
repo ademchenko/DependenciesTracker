@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 [assembly: AssemblyDescription("Brings infrastructure for observing property paths changes and automatically updating properties that depend on that paths.")]
 
 [assembly: AssemblyCompany("Alexander Demchenko")]
-[assembly: AssemblyCopyright("Copyright ©  2016")]
+[assembly: AssemblyCopyright("Copyright ©  2017")]
 
 [assembly: AssemblyTitle("DependenciesTracking")]
 [assembly: AssemblyProduct("DependenciesTracking")]
