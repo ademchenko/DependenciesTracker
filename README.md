@@ -17,4 +17,4 @@ PM> Install-Package DependenciesTracking
 * ["Samples" folder](https://github.com/ademchenko/DependenciesTracker/tree/master/Samples) in DependenciesTracking repository contains WPF solution which demonstrates Tracker features.
 
 ### License
-.DependenciesTracking is licensed under the [MIT license](https://github.com/ademchenko/DependenciesTracker/LICENSE).
+.DependenciesTracking is licensed under the [MIT license](https://github.com/ademchenko/DependenciesTracker/blob/master/LICENSE).
