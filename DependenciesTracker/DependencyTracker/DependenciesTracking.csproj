@@ -1,6 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="12.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+<Project Sdk="Microsoft.NET.Sdk">  
   <PropertyGroup>
     <MinimumVisualStudioVersion>11.0</MinimumVisualStudioVersion>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
@@ -12,9 +11,8 @@
     <AssemblyName>DependenciesTracking</AssemblyName>
     <DefaultLanguage>en-US</DefaultLanguage>
     <FileAlignment>512</FileAlignment>
-    <ProjectTypeGuids>{786C830F-07A1-408B-BD7F-6EE04809D6DB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
-    <TargetFrameworkProfile>Profile78</TargetFrameworkProfile>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <ProjectTypeGuids>{786C830F-07A1-408B-BD7F-6EE04809D6DB};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>    
+    <TargetFrameworks>netstandard1.0;netstandard2.0;net40;net45</TargetFrameworks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -38,32 +36,27 @@
   </PropertyGroup>
   <PropertyGroup>
     <AssemblyOriginatorKeyFile>..\DependenciesTracking.snk</AssemblyOriginatorKeyFile>
+    <Version>1.0.4.0</Version>
+    <Copyright></Copyright>
+    <Authors>Alexander Demchenko</Authors>
+    <RepositoryUrl>https://github.com/ademchenko/DependenciesTracker</RepositoryUrl>
+    <Description>Brings infrastructure for observing property paths changes and automatically updating properties that depend on that paths.</Description>
+    <PackageProjectUrl>https://github.com/ademchenko/DependenciesTracker</PackageProjectUrl>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
-  <ItemGroup>
-    <Compile Include="CollectionExtensions.cs" />
-    <Compile Include="CollectionPathItem.cs" />
-    <Compile Include="DependenciesMap.cs" />
-    <Compile Include="DependenciesTracker.cs" />
-    <Compile Include="DependenciesTracker.PropertyChangeSubscriber.cs" />
-    <Compile Include="Disposable.cs" />
-    <Compile Include="EnumerableExtensions.cs" />
-    <Compile Include="IDependenciesMap.cs" />
-    <Compile Include="PathItemBase.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="PropertyPathItem.cs" />
+   <ItemGroup Condition=" '$(TargetFramework)' == 'net40' ">
+	 <Reference Include="System" />
+	 <Reference Include="System.Core" />
+	 <Reference Include="System.Xml.Linq" />
+	 <Reference Include="System.Data.DataSetExtensions" />
+	 <Reference Include="Microsoft.CSharp" />
+	 <Reference Include="System.Data" />
+	 <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\DependenciesTracking.snk">
       <Link>DependenciesTracking.snk</Link>
     </None>
-    <None Include="DependenciesTracking.nuspec" />
   </ItemGroup>
-  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
-  <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
-       Other similar extension points exist, see Microsoft.Common.targets.
-  <Target Name="BeforeBuild">
-  </Target>
-  <Target Name="AfterBuild">
-  </Target>
-  -->
 </Project>

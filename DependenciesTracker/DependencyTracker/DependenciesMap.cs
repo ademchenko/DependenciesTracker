@@ -12,28 +12,23 @@ namespace DependenciesTracking
     {
         private readonly IList<PathItemBase<T>> _mapItems = new List<PathItemBase<T>>();
 
-        private readonly ReadOnlyCollection<PathItemBase<T>> _readOnlyMapItems;
-
-        internal ReadOnlyCollection<PathItemBase<T>> MapItems
-        {
-            get { return _readOnlyMapItems; }
-        }
+        internal ReadOnlyCollection<PathItemBase<T>> MapItems { get; }
 
         public DependenciesMap()
         {
-            _readOnlyMapItems = new ReadOnlyCollection<PathItemBase<T>>(_mapItems);
+            MapItems = new ReadOnlyCollection<PathItemBase<T>>(_mapItems);
         }
 
         public IDependenciesMap<T> AddDependency<U>(Action<T, U> dependentPropertySetter, Func<T, U> calculator, Expression<Func<T, object>> obligatoryDependencyPath, params Expression<Func<T, object>>[] dependencyPaths)
         {
             if (dependentPropertySetter == null)
-                throw new ArgumentNullException("dependentPropertySetter");
+                throw new ArgumentNullException(nameof(dependentPropertySetter));
             if (calculator == null)
-                throw new ArgumentNullException("calculator");
+                throw new ArgumentNullException(nameof(calculator));
             if (obligatoryDependencyPath == null)
-                throw new ArgumentNullException("obligatoryDependencyPath");
+                throw new ArgumentNullException(nameof(obligatoryDependencyPath));
             if (dependencyPaths == null) 
-                throw new ArgumentNullException("dependencyPaths");
+                throw new ArgumentNullException(nameof(dependencyPaths));
             if (dependencyPaths.Any(p => p == null))
                 throw new ArgumentException("On of items in dependencyPaths is null.");
 
@@ -48,7 +43,7 @@ namespace DependenciesTracking
                                                     params Expression<Func<T, object>>[] dependencyPaths)
         {
             if (dependentProperty == null)
-                throw new ArgumentNullException("dependentProperty");
+                throw new ArgumentNullException(nameof(dependentProperty));
 
             return AddDependency(BuildSetter(dependentProperty), calculator, obligatoryDependencyPath, dependencyPaths);
         }
@@ -61,6 +56,7 @@ namespace DependenciesTracking
             if (memberExpression == null)
                 ThrowNotSupportedExpressionForDependentProperty(dependentProperty.Body);
 
+            // ReSharper disable once PossibleNullReferenceException
             if (!(memberExpression.Expression is ParameterExpression))
                 ThrowNotSupportedExpressionForDependentProperty(memberExpression);
 
@@ -72,43 +68,41 @@ namespace DependenciesTracking
             return lambda.Compile();
         }
 
-        private static void ThrowNotSupportedExpressionForDependentProperty(Expression notSuppportedExpression)
+
+        private static void ThrowNotSupportedExpressionForDependentProperty(Expression notSupportedExpression)
         {
-            Debug.Assert(notSuppportedExpression != null);
+            Debug.Assert(notSupportedExpression != null);
 
             throw new NotSupportedException(
-                string.Format("Expression {0} is not supported. The only property or field member expression with no chains (i.e. one level from root object) is supported.",
-                    notSuppportedExpression));
+                $"Expression {notSupportedExpression} is not supported. The only property or field member expression with no chains (i.e. one level from root object) is supported.");
         }
 
         private static IEnumerable<PathItemBase<T>> BuildPaths(IEnumerable<Expression<Func<T, object>>> dependencyPaths, Action<T> calculateAndSet)
         {
             if (calculateAndSet == null)
-                throw new ArgumentNullException("calculateAndSet");
+                throw new ArgumentNullException(nameof(calculateAndSet));
 
             return dependencyPaths.Select(pathExpression => BuildPath(pathExpression, calculateAndSet)).ToList();
         }
 
-        private static PathItemBase<T> BuildPath(Expression<Func<T, object>> pathExpession, Action<T> calculateAndSet)
+        private static PathItemBase<T> BuildPath(Expression<Func<T, object>> pathExpression, Action<T> calculateAndSet)
         {
-            var convertExpression = pathExpession.Body as UnaryExpression;
+            var convertExpression = pathExpression.Body as UnaryExpression;
             if (convertExpression != null &&
                 (convertExpression.NodeType != ExpressionType.Convert || convertExpression.Type != typeof(object)))
-                throw new NotSupportedException(string.Format(
-                    "Unary expression {0} is not supported. Only \"convert to object\" expression is allowed in the end of path.", convertExpression));
+                throw new NotSupportedException($"Unary expression {convertExpression} is not supported. Only \"convert to object\" expression is allowed in the end of path.");
 
-            var currentExpression = convertExpression != null ? convertExpression.Operand : pathExpession.Body;
+            var currentExpression = convertExpression != null ? convertExpression.Operand : pathExpression.Body;
 
             PathItemBase<T> rootPathItem = null;
 
             while (!(currentExpression is ParameterExpression))
             {
-                var methodCall = currentExpression as MethodCallExpression;
-                if (methodCall != null)
+                if (currentExpression is MethodCallExpression methodCall)
                 {
                     if (!methodCall.Method.IsGenericMethod || !methodCall.Method.GetGenericMethodDefinition().Equals(CollectionExtensions.EachElementMethodInfo))
-                        throw new NotSupportedException(string.Format("Call of method {0} is not supported. Only {1} call is supported for collections in path",
-                                                                      methodCall.Method, CollectionExtensions.EachElementMethodInfo));
+                        throw new NotSupportedException(
+                            $"Call of method {methodCall.Method} is not supported. Only {CollectionExtensions.EachElementMethodInfo} call is supported for collections in path");
 
                     rootPathItem = new CollectionPathItem<T>(rootPathItem, rootPathItem == null ? calculateAndSet : null);
 
@@ -117,9 +111,8 @@ namespace DependenciesTracking
                     continue;
                 }
 
-                var memberExpression = currentExpression as MemberExpression;
-                if (memberExpression == null)
-                    throw new NotSupportedException(string.Format("Expected expression is member expression. Expression {0} is not supported.", currentExpression));
+                if (!(currentExpression is MemberExpression memberExpression))
+                    throw new NotSupportedException($"Expected expression is member expression. Expression {currentExpression} is not supported.");
 
                 var property = memberExpression.Member;
                 var compiledGetter = BuildGetter(memberExpression.Expression.Type, property.Name);
@@ -131,7 +124,7 @@ namespace DependenciesTracking
 
             //The chain doesn't contain any element (i.e. the expression contains only root object root => root)
             if (rootPathItem == null)
-                throw new NotSupportedException(string.Format("The path {0} is too short. It contains a root object only.", pathExpession));
+                throw new NotSupportedException($"The path {pathExpression} is too short. It contains a root object only.");
 
             rootPathItem = new PropertyPathItem<T>(o => o, string.Empty, rootPathItem, null);
 
@@ -152,9 +145,6 @@ namespace DependenciesTracking
 
         }
 
-        public IDisposable StartTracking(T trackedObject)
-        {
-            return new DependenciesTracker<T>(this, trackedObject);
-        }
+        public IDisposable StartTracking(T trackedObject) => new DependenciesTracker<T>(this, trackedObject);
     }
 }

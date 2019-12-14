@@ -7,9 +7,6 @@ namespace DependenciesTracking
         public CollectionPathItem(PathItemBase<T> ancestor, Action<T> updateDependentPropertyOrFieldAction)
             : base(ancestor, updateDependentPropertyOrFieldAction) { }
 
-        protected override string StringRep
-        {
-            get { return "CollectionItem"; }
-        }
+        protected override string StringRep => "CollectionItem";
     }
 }

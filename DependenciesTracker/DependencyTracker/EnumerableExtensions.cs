@@ -8,7 +8,7 @@ namespace DependenciesTracking
         public static IEnumerable<T> StartWith<T>(this IEnumerable<T> source, T startingElement)
         {
             if (source == null)
-                throw new ArgumentNullException("source");
+                throw new ArgumentNullException(nameof(source));
 
             yield return startingElement;
             
