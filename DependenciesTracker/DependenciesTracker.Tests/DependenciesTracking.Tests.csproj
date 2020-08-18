@@ -8,8 +8,8 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>DependenciesTracking.Tests</RootNamespace>
     <AssemblyName>DependenciesTracking.Tests</AssemblyName>
-    <TargetFrameworks>net40</TargetFrameworks>
-    <FileAlignment>512</FileAlignment>    
+    <FileAlignment>512</FileAlignment>
+    <TargetFrameworks>net40;net45;netcoreapp3.1</TargetFrameworks>    
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -37,14 +37,21 @@
     <AssemblyOriginatorKeyFile>..\DependenciesTracking.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="xunit" Version="1.9.2" />
-	<PackageReference Include="xunit.extensions" Version="1.9.2" />
     <ProjectReference Include="..\DependencyTracker\DependenciesTracking.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\DependenciesTracking.snk">
       <Link>DependenciesTracking.snk</Link>
     </None>
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net40'">
+    <PackageReference Include="xunit" Version="1.9.2" />
+    <PackageReference Include="xunit.extensions" Version="1.9.2" />
+  </ItemGroup>  
+  <ItemGroup Condition="'$(TargetFramework)' != 'net40'">
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.7.0" />
+    <PackageReference Include="xunit" Version="2.4.1" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.3" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Properties\" />
