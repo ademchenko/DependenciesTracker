@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
@@ -135,57 +136,69 @@ namespace DependenciesTracking.Tests
 
     public class PathBuildingTests
     {
-        public static IEnumerable<Expression<Func<PathBuildingTestClass, object>>[]> AddDependency_RootOnlyPath_NotSupported_TestData
+        public class AddDependency_RootOnlyPath_NotSupported_TestData : IEnumerable<object[]>
         {
-            get
+            private static IEnumerable<object[]> Data()
             {
                 //With convert
-                yield return new Expression<Func<PathBuildingTestClass, object>>[] { o => (object)o };
+                yield return new object[] { (Expression<Func<PathBuildingTestClass, object>>)(o => (object)o) };
                 //With no convert
-                yield return new Expression<Func<PathBuildingTestClass, object>>[] { o => o };
+                yield return new object[] { (Expression<Func<PathBuildingTestClass, object>>)(o => o) };
             }
-        }
+            
+            public IEnumerator<object[]> GetEnumerator() => Data().GetEnumerator();
 
-        public static IEnumerable<Expression<Func<PathBuildingTestClass, object>>[]> AddDependency_ExternalMethodCallsInPath_NotSupported_TestData
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        }
+        
+        public class AddDependency_ExternalMethodCallsInPath_NotSupported_TestData : IEnumerable<object[]>
         {
-            get
+            private static IEnumerable<object[]> Data()
             {
                 //Instance method of simple property
-                yield return new Expression<Func<PathBuildingTestClass, object>>[] { o => o.IntProperty.ToString().Length };
+                yield return new object[] { (Expression<Func<PathBuildingTestClass, object>>)(o => o.IntProperty.ToString().Length) };
                 //Extension method of simple property
-                yield return new Expression<Func<PathBuildingTestClass, object>>[] { o => o.IntProperty.ExtensionCall().Length };
+                yield return new object[] { (Expression<Func<PathBuildingTestClass, object>>)(o => o.IntProperty.ExtensionCall().Length) };
                 //Instance method of collection property
-                yield return new Expression<Func<PathBuildingTestClass, object>>[] { o => o.Strings.ToArray().Length };
+                yield return new object[] { (Expression<Func<PathBuildingTestClass, object>>)(o => o.Strings.ToArray().Length) };
                 //Extension method of collection property
-                yield return new Expression<Func<PathBuildingTestClass, object>>[] { o => o.Strings.First().Length };
+                yield return new object[] { (Expression<Func<PathBuildingTestClass, object>>)(o => o.Strings.First().Length) };
                 //Extension method of collection property with the same name of class and method as DependenciesTracker.CollectionExtensions.EachElement<T>
-                yield return new Expression<Func<PathBuildingTestClass, object>>[] { o => o.Strings.EachElement().Length };
+                yield return new object[] { (Expression<Func<PathBuildingTestClass, object>>)(o => o.Strings.EachElement().Length) };
             }
-        }
+            
+            public IEnumerator<object[]> GetEnumerator() => Data().GetEnumerator();
 
-        public static IEnumerable<Expression<Func<PathBuildingTestClass, object>>[]> AddDependency_ConvertsInsideThePath_NotSupported_TestData
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        }
+        
+        public class AddDependency_ConvertsInsideThePath_NotSupported_TestData : IEnumerable<object[]>
         {
-            get
+            private static IEnumerable<object[]> Data()
             {
                 //Only single convert to "object" is allowed in the end of path
-                yield return new Expression<Func<PathBuildingTestClass, object>>[] { o => (decimal)o.DependentProperty };
+                yield return new object[] { (Expression<Func<PathBuildingTestClass, object>>)(o => (decimal)o.DependentProperty) };
                 //Only single convert to "object" is allowed in the end of path
-                yield return new Expression<Func<PathBuildingTestClass, object>>[] { o => (object)(decimal)o.DependentProperty };
+                yield return new object[] { (Expression<Func<PathBuildingTestClass, object>>)(o => (object)(decimal)o.DependentProperty) };
                 //Only single convert to "object" is allowed in the end of path
-                yield return new Expression<Func<PathBuildingTestClass, object>>[] { o => (IPathBuildingTestClass)o.Child };
+                yield return new object[] { (Expression<Func<PathBuildingTestClass, object>>)(o => (IPathBuildingTestClass)o.Child) };
                 //Only single convert to "object" is allowed in the end of path
-                yield return new Expression<Func<PathBuildingTestClass, object>>[] { o => (object)(IPathBuildingTestClass)o.Child };
+                yield return new object[] { (Expression<Func<PathBuildingTestClass, object>>)(o => (object)(IPathBuildingTestClass)o.Child) };
                 //No converts are allowed at the begginning of path (i.e. root object convertion isn't allowed)
-                yield return new Expression<Func<PathBuildingTestClass, object>>[] { o => ((IPathBuildingTestClass)o).IntProperty };
+                yield return new object[] { (Expression<Func<PathBuildingTestClass, object>>)(o => ((IPathBuildingTestClass)o).IntProperty) };
                 //No converts are allowed in the middle of path
-                yield return new Expression<Func<PathBuildingTestClass, object>>[] { o => ((IPathBuildingTestClass)o.Child).IntProperty };
+                yield return new object[] { (Expression<Func<PathBuildingTestClass, object>>)(o => ((IPathBuildingTestClass)o.Child).IntProperty) };
             }
+            
+            public IEnumerator<object[]> GetEnumerator() => Data().GetEnumerator();
+
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
 
         [Theory]
-        [PropertyData("AddDependency_RootOnlyPath_NotSupported_TestData")]
-        [PropertyData("AddDependency_ExternalMethodCallsInPath_NotSupported_TestData")]
-        [PropertyData("AddDependency_ConvertsInsideThePath_NotSupported_TestData")]
+        [ClassData(typeof(AddDependency_RootOnlyPath_NotSupported_TestData))]
+        [ClassData(typeof(AddDependency_ExternalMethodCallsInPath_NotSupported_TestData))]
+        [ClassData(typeof(AddDependency_ConvertsInsideThePath_NotSupported_TestData))]
         public void AddDependency_NotSupportedPaths(Expression<Func<PathBuildingTestClass, object>> path)
         {
             var map = new DependenciesMap<PathBuildingTestClass>();
@@ -204,9 +217,9 @@ namespace DependenciesTracking.Tests
                 );
         }
 
-        public static IEnumerable<object[]> AddDependency_ConvertToObject_AllowedAtTheEndOfPath_TestData
+        public class AddDependency_ConvertToObject_AllowedAtTheEndOfPath_TestData : IEnumerable<object[]>
         {
-            get
+            private static IEnumerable<object[]> Data()
             {
                 //Explicit conversion of value type
                 yield return new object[]
@@ -250,19 +263,22 @@ namespace DependenciesTracking.Tests
                     new[] {"root", "Ints", "CollectionItem"}
                 };
             }
+            public IEnumerator<object[]> GetEnumerator() => Data().GetEnumerator();
+
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
 
         [Theory]
-        [PropertyData("AddDependency_ConvertToObject_AllowedAtTheEndOfPath_TestData")]
+        [ClassData(typeof(AddDependency_ConvertToObject_AllowedAtTheEndOfPath_TestData))]
         public void AddDependency_ConvertToObject_AllowedAtTheEndOfPath(Expression<Func<PathBuildingTestClass, object>> path,
             string[] expectedParseResult)
         {
             SupportedPathsTestImpl(path, expectedParseResult);
         }
-
-        public static IEnumerable<object[]> AddDependency_SupportedPaths_TestData
+        
+        public class AddDependency_SupportedPaths_TestData : IEnumerable<object[]>
         {
-            get
+            private static IEnumerable<object[]> Data()
             {
                 //Simple reference type property
                 yield return new object[]
@@ -456,10 +472,13 @@ namespace DependenciesTracking.Tests
                     new[] {"root", "IntLists", "CollectionItem", "CollectionItem"}
                 };
             }
+            public IEnumerator<object[]> GetEnumerator() => Data().GetEnumerator();
+
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
 
         [Theory]
-        [PropertyData("AddDependency_SupportedPaths_TestData")]
+        [ClassData(typeof(AddDependency_SupportedPaths_TestData))]
         public void AddDependency_SupportedPaths(Expression<Func<PathBuildingTestClass, object>> path,
             string[] expectedParseResult)
         {
@@ -770,18 +789,22 @@ namespace DependenciesTracking.Tests
 
             Assert.Equal(expectedStringLength, actualStringLength);
         }
-
-        public static IEnumerable<object[]> AddDependency_ReadOnlyDependentPropertyOrField_NotSupported_TestData
+        
+        public class AddDependency_ReadOnlyDependentPropertyOrField_NotSupported_TestData : IEnumerable<object[]>
         {
-            get
+            private static IEnumerable<object[]> Data()
             {
                 yield return new object[] { (Expression<Func<PathBuildingTestClass, int>>)(o => o.DependentFieldReadOnly) };
                 yield return new object[] { (Expression<Func<PathBuildingTestClass, int>>)(o => o.DependentPropertyReadOnly) };
             }
+            
+            public IEnumerator<object[]> GetEnumerator() => Data().GetEnumerator();
+
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
 
         [Theory]
-        [PropertyData("AddDependency_ReadOnlyDependentPropertyOrField_NotSupported_TestData")]
+        [ClassData(typeof(AddDependency_ReadOnlyDependentPropertyOrField_NotSupported_TestData))]
         public void AddDependency_ReadOnlyDependentPropertyOrField_NotSupported(
             Expression<Func<PathBuildingTestClass, int>> dependentPropertyExpression)
         {
@@ -791,22 +814,28 @@ namespace DependenciesTracking.Tests
             //of Expression.Assign implementation, so not by argument checks of AddDependency, but it's enough for now
             Assert.Throws<ArgumentException>(() => map.AddDependency(dependentPropertyExpression, o => -1, o => o.IntProperty));
         }
+        
+        
 
         /// <summary>
         /// This test data set reproduces the <see cref="https://github.com/ademchenko/DependenciesTracker/issues/5"/> issue
         /// </summary>
-        public static IEnumerable<object[]> AddDependency_DependentPropertyOrField_Chains_NotSupported_TestData
+        public class AddDependency_DependentPropertyOrField_Chains_NotSupported_TestData : IEnumerable<object[]>
         {
-            get
+            private static IEnumerable<object[]> Data()
             {
                 yield return new object[] { (Expression<Func<PathBuildingTestClass, int>>)(o => o.InnerProperty.IntProperty) };
                 yield return new object[] { (Expression<Func<PathBuildingTestClass, int>>)(o => o.InnerField.IntProperty) };
                 yield return new object[] { (Expression<Func<PathBuildingTestClass, int>>)(o => o.InnerField.IntField) };
             }
+            
+            public IEnumerator<object[]> GetEnumerator() => Data().GetEnumerator();
+
+            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
         }
 
         [Theory]
-        [PropertyData("AddDependency_DependentPropertyOrField_Chains_NotSupported_TestData")]
+        [ClassData(typeof(AddDependency_DependentPropertyOrField_Chains_NotSupported_TestData))]
         public void AddDependency_DependentPropertyOrField_Chains_NotSupported(
             Expression<Func<PathBuildingTestClass, int>> dependentPropertyExpression)
         {

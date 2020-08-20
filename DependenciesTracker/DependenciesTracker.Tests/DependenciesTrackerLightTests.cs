@@ -1,6 +1,5 @@
 ﻿using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Net;
 using DependenciesTracking.Tests.Stubs;
 using Xunit;
 

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.ComponentModel;
-using System.Runtime.Remoting.Messaging;
 using DependenciesTracking.Interfaces;
 
 namespace DependenciesTracking.Tests.Stubs

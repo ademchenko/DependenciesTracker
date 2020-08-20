@@ -10,7 +10,7 @@ namespace DependenciesTracking
         public Disposable(Action disposeAction)
         {
             if (disposeAction == null)
-                throw new ArgumentNullException("disposeAction");
+                throw new ArgumentNullException(nameof(disposeAction));
             
             _disposeAction = disposeAction;
         }
