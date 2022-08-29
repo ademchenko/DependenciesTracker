@@ -17,7 +17,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\DependencyTracker\DependenciesTracking.csproj" />
+		<ProjectReference Include="..\DependenciesTracking\DependenciesTracking.csproj" />
 	</ItemGroup>
 	
 </Project>

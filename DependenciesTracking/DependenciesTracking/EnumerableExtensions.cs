@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace DependenciesTracking
 {
@@ -11,7 +12,7 @@ namespace DependenciesTracking
                 throw new ArgumentNullException("source");
 
             yield return startingElement;
-            
+
             foreach (var element in source)
                 yield return element;
         }
