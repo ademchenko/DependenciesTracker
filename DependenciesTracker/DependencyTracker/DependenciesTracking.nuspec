@@ -10,6 +10,6 @@
     <projectUrl>https://github.com/ademchenko/DependenciesTracker/</projectUrl>
     <requireLicenseAcceptance>false</requireLicenseAcceptance>
     <description>Brings infrastructure for observing property paths changes and automatically updating properties that depend on that paths.</description>
-    <copyright>Copyright 2017</copyright>
+    <copyright>Copyright 2022</copyright>
   </metadata>
 </package>

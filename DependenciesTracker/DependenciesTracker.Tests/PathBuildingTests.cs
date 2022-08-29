@@ -135,7 +135,7 @@ namespace DependenciesTracking.Tests
 
     public class PathBuildingTests
     {
-        public static IEnumerable<Expression<Func<PathBuildingTestClass, object>>[]> AddDependency_RootOnlyPath_NotSupported_TestData
+        public static IEnumerable<object[]> AddDependency_RootOnlyPath_NotSupported_TestData
         {
             get
             {
@@ -146,7 +146,7 @@ namespace DependenciesTracking.Tests
             }
         }
 
-        public static IEnumerable<Expression<Func<PathBuildingTestClass, object>>[]> AddDependency_ExternalMethodCallsInPath_NotSupported_TestData
+        public static IEnumerable<object[]> AddDependency_ExternalMethodCallsInPath_NotSupported_TestData
         {
             get
             {
@@ -163,7 +163,7 @@ namespace DependenciesTracking.Tests
             }
         }
 
-        public static IEnumerable<Expression<Func<PathBuildingTestClass, object>>[]> AddDependency_ConvertsInsideThePath_NotSupported_TestData
+        public static IEnumerable<object[]> AddDependency_ConvertsInsideThePath_NotSupported_TestData
         {
             get
             {
@@ -183,9 +183,9 @@ namespace DependenciesTracking.Tests
         }
 
         [Theory]
-        [PropertyData("AddDependency_RootOnlyPath_NotSupported_TestData")]
-        [PropertyData("AddDependency_ExternalMethodCallsInPath_NotSupported_TestData")]
-        [PropertyData("AddDependency_ConvertsInsideThePath_NotSupported_TestData")]
+        [MemberData("AddDependency_RootOnlyPath_NotSupported_TestData")]
+        [MemberData("AddDependency_ExternalMethodCallsInPath_NotSupported_TestData")]
+        [MemberData("AddDependency_ConvertsInsideThePath_NotSupported_TestData")]
         public void AddDependency_NotSupportedPaths(Expression<Func<PathBuildingTestClass, object>> path)
         {
             var map = new DependenciesMap<PathBuildingTestClass>();
@@ -198,7 +198,7 @@ namespace DependenciesTracking.Tests
         public void AddDependency_MoreThanOneDependencyOnAProperty_NotSupported()
         {
             var map = new DependenciesMap<PathBuildingTestClass>();
-            Assert.Throws<InvalidOperationException>(() => 
+            Assert.Throws<InvalidOperationException>(() =>
                 map.AddDependency(o => o.DependentProperty, o => -1, o => o.IntProperty)
                    .AddDependency(o => o.DependentProperty, o => -2, o => o.StringProperty)
                 );
@@ -253,7 +253,7 @@ namespace DependenciesTracking.Tests
         }
 
         [Theory]
-        [PropertyData("AddDependency_ConvertToObject_AllowedAtTheEndOfPath_TestData")]
+        [MemberData("AddDependency_ConvertToObject_AllowedAtTheEndOfPath_TestData")]
         public void AddDependency_ConvertToObject_AllowedAtTheEndOfPath(Expression<Func<PathBuildingTestClass, object>> path,
             string[] expectedParseResult)
         {
@@ -459,7 +459,7 @@ namespace DependenciesTracking.Tests
         }
 
         [Theory]
-        [PropertyData("AddDependency_SupportedPaths_TestData")]
+        [MemberData("AddDependency_SupportedPaths_TestData")]
         public void AddDependency_SupportedPaths(Expression<Func<PathBuildingTestClass, object>> path,
             string[] expectedParseResult)
         {
@@ -701,7 +701,7 @@ namespace DependenciesTracking.Tests
             Assert.Equal("Length", lengthPathItem.PathStrings.Single());
 
             var actualStringLength = lengthPathItem.PropertyOrFieldGetter(obj);
-            
+
             Assert.Equal(expectedStringLength, actualStringLength);
         }
 
@@ -719,12 +719,12 @@ namespace DependenciesTracking.Tests
 
             var stringsCollectionItem = (CollectionPathItem<PathBuildingTestClass>)stringsPathItem.Ancestor;
 
-            var lengthPathItem = (PropertyPathItem<PathBuildingTestClass>) stringsCollectionItem.Ancestor;
+            var lengthPathItem = (PropertyPathItem<PathBuildingTestClass>)stringsCollectionItem.Ancestor;
             Assert.Equal("Length", lengthPathItem.PathStrings.Single());
 
             var rootObject = new PathBuildingTestClass();
             var expectedStringsValue = new List<string>();
-            
+
             rootObject.Strings = expectedStringsValue;
 
             Assert.Equal(expectedStringsValue, stringsPathItem.PropertyOrFieldGetter(rootObject));
@@ -741,7 +741,7 @@ namespace DependenciesTracking.Tests
         public void AddDependency_CollectionElementOfCollectionElementOfPropertyPropertyGetter_Success()
         {
             var map = new DependenciesMap<PathBuildingTestClass>();
-            map.AddDependency(o => o.DependentProperty, o => -1, 
+            map.AddDependency(o => o.DependentProperty, o => -1,
                 o => DependenciesTracking.CollectionExtensions.EachElement(DependenciesTracking.CollectionExtensions.EachElement(o.StringLists)).Length);
 
             var rootPathItem = map.MapItems.Single();
@@ -781,7 +781,7 @@ namespace DependenciesTracking.Tests
         }
 
         [Theory]
-        [PropertyData("AddDependency_ReadOnlyDependentPropertyOrField_NotSupported_TestData")]
+        [MemberData("AddDependency_ReadOnlyDependentPropertyOrField_NotSupported_TestData")]
         public void AddDependency_ReadOnlyDependentPropertyOrField_NotSupported(
             Expression<Func<PathBuildingTestClass, int>> dependentPropertyExpression)
         {
@@ -806,7 +806,7 @@ namespace DependenciesTracking.Tests
         }
 
         [Theory]
-        [PropertyData("AddDependency_DependentPropertyOrField_Chains_NotSupported_TestData")]
+        [MemberData("AddDependency_DependentPropertyOrField_Chains_NotSupported_TestData")]
         public void AddDependency_DependentPropertyOrField_Chains_NotSupported(
             Expression<Func<PathBuildingTestClass, int>> dependentPropertyExpression)
         {
