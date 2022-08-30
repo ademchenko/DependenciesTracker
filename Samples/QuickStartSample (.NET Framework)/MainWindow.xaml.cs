@@ -25,6 +25,8 @@ namespace DependenciesTracking.QuickStartSample
             InitializeComponent();
 
             DataContext = new ViewModel();
+
+            Title = ".NET (Framework) runtime version: " + Environment.Version.ToString();
         }
     }
 }

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Windows.Input;
-using DependenciesTracking.QuickStartSample.Annotations;
 
 namespace DependenciesTracking.QuickStartSample
 {
@@ -8,7 +7,7 @@ namespace DependenciesTracking.QuickStartSample
     {
         private readonly Action<object> _executeAction;
 
-        public DelegateCommand([NotNull] Action<object> executeAction)
+        public DelegateCommand(Action<object> executeAction)
         {
             if (executeAction == null) 
                 throw new ArgumentNullException("executeAction");

@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net6.0-windows</TargetFramework>
+    <RootNamespace>QuickStartSample__.NET_</RootNamespace>
+    <Nullable>enable</Nullable>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\QuickStartSample (.NET Framework)\App.xaml.cs" Link="App.xaml.cs" />
+    <Compile Include="..\QuickStartSample (.NET Framework)\DelegateCommand.cs" Link="DelegateCommand.cs" />
+    <Compile Include="..\QuickStartSample (.NET Framework)\Invoice.cs" Link="Invoice.cs" />
+    <Compile Include="..\QuickStartSample (.NET Framework)\MainWindow.xaml.cs" Link="MainWindow.xaml.cs" />
+    <Compile Include="..\QuickStartSample (.NET Framework)\Order.cs" Link="Order.cs" />
+    <Compile Include="..\QuickStartSample (.NET Framework)\ViewModel.cs" Link="ViewModel.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ApplicationDefinition Include="..\QuickStartSample (.NET Framework)\App.xaml" Link="App.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </ApplicationDefinition>
+    <PackageReference Include="DependenciesTracking" Version="2.0.0.1" />
+    <Page Include="..\QuickStartSample (.NET Framework)\MainWindow.xaml" Link="MainWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+
+</Project>
